@@ -10,51 +10,69 @@ import {
   Platform,
   ScrollView,
   SafeAreaView,
+  Alert,
 } from 'react-native';
-import { login } from '../services/authService';
+import { registrarUsuario } from '../services/registroService';
 
-interface LoginScreenProps {
-  onLoginSuccess: (tipoUsuario: 'admin' | 'usuario') => void;
-  onGoToRegister: () => void;
+interface RegisterScreenProps {
+  onRegisterSuccess: () => void;
+  onBackToLogin: () => void;
 }
 
-export default function LoginScreen({ onLoginSuccess, onGoToRegister }: LoginScreenProps) {
+export default function RegisterScreen({ onRegisterSuccess, onBackToLogin }: RegisterScreenProps) {
+  const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
+  const [confirmarSenha, setConfirmarSenha] = useState('');
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
-  async function handleLogin() {
-    setErro(null);
-    
-    if (!email || !senha) {
-      setErro('Preencha email e senha.');
-      return;
+  function validarCampos(): string | null {
+    if (!nome || !email || !senha || !confirmarSenha) {
+      return 'Preencha todos os campos.';
+    }
+
+    if (nome.trim().length < 3) {
+      return 'O nome deve ter pelo menos 3 caracteres.';
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      setErro('Digite um email válido.');
-      return;
+      return 'Digite um email válido.';
     }
 
     if (senha.length < 6) {
-      setErro('A senha deve ter pelo menos 6 caracteres.');
+      return 'A senha deve ter pelo menos 6 caracteres.';
+    }
+
+    if (senha !== confirmarSenha) {
+      return 'As senhas não coincidem.';
+    }
+
+    return null;
+  }
+
+  async function handleRegistrar() {
+    setErro(null);
+
+    const erroValidacao = validarCampos();
+    if (erroValidacao) {
+      setErro(erroValidacao);
       return;
     }
 
     setLoading(true);
 
     try {
-      const result = await login(email.trim(), senha);
+      const result = await registrarUsuario(nome.trim(), email.trim(), senha);
 
       if (result.success && result.usuario) {
-        onLoginSuccess(result.usuario.tipo_usuario);
+        onRegisterSuccess();
       } else {
-        setErro(result.error || 'Erro ao fazer login.');
+        setErro(result.error || 'Erro ao criar conta.');
       }
     } catch (error: any) {
-      setErro('Erro ao fazer login. Verifique sua conexão.');
+      setErro('Erro ao criar conta. Tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -76,10 +94,10 @@ export default function LoginScreen({ onLoginSuccess, onGoToRegister }: LoginScr
             {/* Header */}
             <View style={styles.header}>
               <View style={styles.logoContainer}>
-                <Text style={styles.logoIcon}>🔐</Text>
+                <Text style={styles.logoIcon}>👤</Text>
               </View>
-              <Text style={styles.title}>Bem-vindo</Text>
-              <Text style={styles.subtitle}>Digite suas credenciais para acessar</Text>
+              <Text style={styles.title}>Criar Conta</Text>
+              <Text style={styles.subtitle}>Preencha os dados para se cadastrar</Text>
             </View>
 
             {/* Mensagem de Erro */}
@@ -94,6 +112,28 @@ export default function LoginScreen({ onLoginSuccess, onGoToRegister }: LoginScr
 
             {/* Formulário */}
             <View style={styles.form}>
+              {/* Nome */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Nome completo</Text>
+                <View style={[styles.inputWrapper, erro && !nome && styles.inputError]}>
+                  <Text style={styles.inputIcon}>👤</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Seu nome"
+                    placeholderTextColor="#9CA3AF"
+                    value={nome}
+                    onChangeText={(text) => {
+                      setNome(text);
+                      if (erro) setErro(null);
+                    }}
+                    autoCapitalize="words"
+                    autoCorrect={false}
+                    editable={!loading}
+                  />
+                </View>
+              </View>
+
+              {/* Email */}
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Email</Text>
                 <View style={[styles.inputWrapper, erro && !email && styles.inputError]}>
@@ -115,13 +155,14 @@ export default function LoginScreen({ onLoginSuccess, onGoToRegister }: LoginScr
                 </View>
               </View>
 
+              {/* Senha */}
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Senha</Text>
                 <View style={[styles.inputWrapper, erro && !senha && styles.inputError]}>
-                  <Text style={styles.inputIcon}>🔑</Text>
+                  <Text style={styles.inputIcon}>🔒</Text>
                   <TextInput
                     style={styles.input}
-                    placeholder="••••••••"
+                    placeholder="Mínimo 6 caracteres"
                     placeholderTextColor="#9CA3AF"
                     value={senha}
                     onChangeText={(text) => {
@@ -135,44 +176,57 @@ export default function LoginScreen({ onLoginSuccess, onGoToRegister }: LoginScr
                 </View>
               </View>
 
+              {/* Confirmar Senha */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Confirmar senha</Text>
+                <View style={[styles.inputWrapper, erro && !confirmarSenha && styles.inputError]}>
+                  <Text style={styles.inputIcon}>🔓</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Repita a senha"
+                    placeholderTextColor="#9CA3AF"
+                    value={confirmarSenha}
+                    onChangeText={(text) => {
+                      setConfirmarSenha(text);
+                      if (erro) setErro(null);
+                    }}
+                    secureTextEntry
+                    autoCapitalize="none"
+                    editable={!loading}
+                  />
+                </View>
+              </View>
+
+              {/* Botão Cadastrar */}
               <TouchableOpacity
                 style={[styles.button, loading && styles.buttonDisabled]}
-                onPress={handleLogin}
+                onPress={handleRegistrar}
                 disabled={loading}
                 activeOpacity={0.8}
               >
                 {loading ? (
                   <ActivityIndicator color="#fff" size="small" />
                 ) : (
-                  <Text style={styles.buttonText}>Entrar</Text>
+                  <Text style={styles.buttonText}>Criar Conta</Text>
                 )}
               </TouchableOpacity>
 
-              {/* Botão Criar Conta */}
+              {/* Voltar para Login */}
               <TouchableOpacity
-                style={styles.registerButton}
-                onPress={onGoToRegister}
+                style={styles.backButton}
+                onPress={onBackToLogin}
                 disabled={loading}
               >
-                <Text style={styles.registerButtonText}>Criar uma conta →</Text>
+                <Text style={styles.backButtonText}>← Voltar para o login</Text>
               </TouchableOpacity>
             </View>
 
-            {/* Credenciais */}
-            <View style={styles.credentials}>
-              <Text style={styles.credentialsTitle}>Teste:</Text>
-              <View style={styles.badgeRow}>
-                <View style={[styles.badge, styles.badgeAdmin]}>
-                  <Text style={styles.badgeLabel}>Admin</Text>
-                  <Text style={styles.badgeEmail}>admin@exemplo.com</Text>
-                  <Text style={styles.badgePass}>admin123</Text>
-                </View>
-                <View style={[styles.badge, styles.badgeUser]}>
-                  <Text style={styles.badgeLabel}>User</Text>
-                  <Text style={styles.badgeEmail}>user1@exemplo.com</Text>
-                  <Text style={styles.badgePass}>123456</Text>
-                </View>
-              </View>
+            {/* Info */}
+            <View style={styles.infoBox}>
+              <Text style={styles.infoIcon}>ℹ️</Text>
+              <Text style={styles.infoText}>
+                Ao criar uma conta, você terá acesso às funcionalidades de usuário.
+              </Text>
             </View>
           </View>
         </ScrollView>
@@ -217,11 +271,11 @@ const styles = StyleSheet.create({
     width: 70,
     height: 70,
     borderRadius: 35,
-    backgroundColor: '#667eea',
+    backgroundColor: '#10B981',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
-    shadowColor: '#667eea',
+    shadowColor: '#10B981',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 8,
@@ -303,12 +357,12 @@ const styles = StyleSheet.create({
   },
   // Button
   button: {
-    backgroundColor: '#667eea',
+    backgroundColor: '#10B981',
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
     marginTop: 8,
-    shadowColor: '#667eea',
+    shadowColor: '#10B981',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -322,65 +376,34 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
   },
-  // Register button
-  registerButton: {
+  // Back button
+  backButton: {
     paddingVertical: 12,
     alignItems: 'center',
     marginTop: 4,
   },
-  registerButtonText: {
-    color: '#667eea',
+  backButtonText: {
+    color: '#6B7280',
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '500',
   },
-  // Credentials
-  credentials: {
-    marginTop: 24,
-    paddingTop: 20,
+  // Info box
+  infoBox: {
+    marginTop: 20,
+    paddingTop: 16,
     borderTopWidth: 1,
     borderTopColor: '#F3F4F6',
-  },
-  credentialsTitle: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#9CA3AF',
-    textAlign: 'center',
-    marginBottom: 12,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  badgeRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
     gap: 10,
   },
-  badge: {
-    borderRadius: 10,
-    padding: 12,
-    alignItems: 'center',
-    borderWidth: 1,
+  infoIcon: {
+    fontSize: 16,
   },
-  badgeAdmin: {
-    backgroundColor: '#F5F3FF',
-    borderColor: '#DDD6FE',
-  },
-  badgeUser: {
-    backgroundColor: '#ECFDF5',
-    borderColor: '#A7F3D0',
-  },
-  badgeLabel: {
-    fontSize: 9,
-    fontWeight: '700',
-    color: '#6B7280',
-    marginBottom: 4,
-  },
-  badgeEmail: {
+  infoText: {
+    flex: 1,
     fontSize: 12,
-    color: '#1F2937',
-    fontWeight: '500',
-    marginBottom: 2,
-  },
-  badgePass: {
-    fontSize: 11,
-    color: '#9CA3AF',
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    color: '#6B7280',
+    lineHeight: 18,
   },
 });
