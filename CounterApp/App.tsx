@@ -46,7 +46,6 @@ export default function App() {
   }
 
   function handleRegisterSuccess() {
-    // Após registrar, volta para login
     setTelaAtual('login');
   }
 

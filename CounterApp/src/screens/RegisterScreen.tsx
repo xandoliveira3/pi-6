@@ -10,7 +10,6 @@ import {
   Platform,
   ScrollView,
   SafeAreaView,
-  Alert,
 } from 'react-native';
 import { registrarUsuario } from '../services/registroService';
 
@@ -221,12 +220,15 @@ export default function RegisterScreen({ onRegisterSuccess, onBackToLogin }: Reg
               </TouchableOpacity>
             </View>
 
-            {/* Info */}
+            {/* Info Box - Aprovação */}
             <View style={styles.infoBox}>
-              <Text style={styles.infoIcon}>ℹ️</Text>
-              <Text style={styles.infoText}>
-                Ao criar uma conta, você terá acesso às funcionalidades de usuário.
-              </Text>
+              <Text style={styles.infoIcon}>⏳</Text>
+              <View style={styles.infoContent}>
+                <Text style={styles.infoTitle}>Aprovação necessária</Text>
+                <Text style={styles.infoText}>
+                  Após o cadastro, sua conta será revisada pelo administrador. Você receberá acesso após a aprovação.
+                </Text>
+              </View>
             </View>
           </View>
         </ScrollView>
@@ -248,7 +250,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 20,
   },
-  // Card principal
   card: {
     backgroundColor: '#fff',
     borderRadius: 20,
@@ -262,7 +263,6 @@ const styles = StyleSheet.create({
     shadowRadius: 20,
     elevation: 8,
   },
-  // Header
   header: {
     alignItems: 'center',
     marginBottom: 24,
@@ -295,7 +295,6 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     textAlign: 'center',
   },
-  // Error box
   errorBox: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -318,7 +317,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     padding: 4,
   },
-  // Form
   form: {
     gap: 16,
   },
@@ -355,7 +353,6 @@ const styles = StyleSheet.create({
     color: '#1F2937',
     paddingVertical: 12,
   },
-  // Button
   button: {
     backgroundColor: '#10B981',
     borderRadius: 12,
@@ -376,7 +373,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
   },
-  // Back button
   backButton: {
     paddingVertical: 12,
     alignItems: 'center',
@@ -387,7 +383,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
-  // Info box
   infoBox: {
     marginTop: 20,
     paddingTop: 16,
@@ -395,15 +390,28 @@ const styles = StyleSheet.create({
     borderTopColor: '#F3F4F6',
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 10,
+    gap: 12,
+    backgroundColor: '#FFFBEB',
+    borderRadius: 10,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
   },
   infoIcon: {
-    fontSize: 16,
+    fontSize: 20,
+  },
+  infoContent: {
+    flex: 1,
+  },
+  infoTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#92400E',
+    marginBottom: 4,
   },
   infoText: {
-    flex: 1,
     fontSize: 12,
-    color: '#6B7280',
+    color: '#78350F',
     lineHeight: 18,
   },
 });

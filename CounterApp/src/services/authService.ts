@@ -7,39 +7,29 @@ export interface LoginResponse {
   success: boolean;
   usuario?: Usuario;
   error?: string;
+  pendente?: boolean;
 }
 
 export async function login(email: string, senha: string): Promise<LoginResponse> {
   console.log('🔐 [AuthService] === INICIANDO LOGIN ===');
   console.log('[AuthService] Email:', email);
-  console.log('[AuthService] Senha:', senha ? '***' : '(vazia)');
-  console.log('[AuthService] auth:', auth ? 'definido' : 'undefined');
-  console.log('[AuthService] db:', db ? 'definido' : 'undefined');
 
   try {
     // 1. Autentica no Firebase Auth
-    console.log('[AuthService] [PASSO 1] Chamando signInWithEmailAndPassword...');
+    console.log('[AuthService] [PASSO 1] Autenticando...');
     
     const userCredential = await signInWithEmailAndPassword(auth, email, senha);
-    
-    console.log('[AuthService] [PASSO 1] ✅ Auth bem-sucedida!');
-    console.log('[AuthService] UID:', userCredential.user.uid);
-    console.log('[AuthService] Email:', userCredential.user.email);
-
     const { uid } = userCredential.user;
+    
+    console.log('[AuthService] [PASSO 1] ✅ Auth OK! UID:', uid);
 
-    // 2. Busca dados do usuário no Firestore
+    // 2. Busca dados no Firestore
     console.log('[AuthService] [PASSO 2] Buscando no Firestore...');
-    console.log('[AuthService] Collection: usuarios');
-    console.log('[AuthService] Document ID:', uid);
     
     const usuarioDoc = await getDoc(doc(db, 'usuarios', uid));
-    
-    console.log('[AuthService] [PASSO 2] ✅ Documento encontrado:', usuarioDoc.exists());
 
     if (!usuarioDoc.exists()) {
       console.log('[AuthService] ❌ Usuário não existe no Firestore');
-      console.log('[AuthService] Fazendo logout...');
       await signOut(auth);
       return {
         success: false,
@@ -48,24 +38,23 @@ export async function login(email: string, senha: string): Promise<LoginResponse
     }
 
     const usuario = usuarioDoc.data() as Usuario;
-    console.log('[AuthService] Dados do Firestore:', JSON.stringify(usuario, null, 2));
+    console.log('[AuthService] Dados:', JSON.stringify(usuario, null, 2));
 
-    // 3. Verifica se o usuário está ativo
-    console.log('[AuthService] [PASSO 3] Verificando status...');
-    console.log('[AuthService] ativo:', usuario.ativo);
+    // 3. Verifica se está ativo
+    console.log('[AuthService] [PASSO 3] Verificando status... ativo =', usuario.ativo);
     
     if (!usuario.ativo) {
-      console.log('[AuthService] ❌ Usuário inativo');
+      console.log('[AuthService] ❌ Usuário PENDENTE de aprovação');
       await signOut(auth);
       return {
         success: false,
-        error: 'Usuário inativo. Contate o administrador.'
+        pendente: true,
+        error: 'Conta precisa ser ativada pelo administrador.'
       };
     }
 
-    // 4. Retorna sucesso
-    console.log('[AuthService] [PASSO 4] ✅ LOGIN COMPLETO!');
-    console.log('[AuthService] Tipo:', usuario.tipo_usuario);
+    // 4. Sucesso
+    console.log('[AuthService] ✅ LOGIN COMPLETO! Tipo:', usuario.tipo_usuario);
     
     return {
       success: true,
@@ -79,7 +68,6 @@ export async function login(email: string, senha: string): Promise<LoginResponse
     console.log('[AuthService] ❌ === ERRO NO LOGIN ===');
     console.log('[AuthService] Error code:', error?.code);
     console.log('[AuthService] Error message:', error?.message);
-    console.log('[AuthService] Full error:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
 
     let errorMessage = 'Erro ao fazer login. Tente novamente.';
 
@@ -90,13 +78,9 @@ export async function login(email: string, senha: string): Promise<LoginResponse
     } else if (error?.code === 'auth/user-disabled') {
       errorMessage = 'Usuário desativado.';
     } else if (error?.code === 'auth/too-many-requests') {
-      errorMessage = 'Muitas tentativas. Tente novamente mais tarde.';
+      errorMessage = 'Muitas tentativas. Tente mais tarde.';
     } else if (error?.code === 'auth/network-request-failed') {
       errorMessage = 'Erro de rede. Verifique sua conexão.';
-    } else if (error?.code === 'auth/operation-not-allowed') {
-      errorMessage = 'Email/senha não habilitado no Firebase.';
-    } else if (error?.code === 'auth/argument-error') {
-      errorMessage = 'Erro nos argumentos. Verifique email e senha.';
     }
 
     return {

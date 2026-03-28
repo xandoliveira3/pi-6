@@ -14,42 +14,38 @@ export async function registrarUsuario(
   email: string,
   senha: string
 ): Promise<RegistroResponse> {
-  console.log('🔐 [AuthService] === INICIANDO REGISTRO ===');
-  console.log('[AuthService] Nome:', nome);
-  console.log('[AuthService] Email:', email);
+  console.log('🔐 [RegistroService] === INICIANDO REGISTRO ===');
+  console.log('[RegistroService] Nome:', nome);
+  console.log('[RegistroService] Email:', email);
 
   try {
     // 1. Verifica se email já existe no Firestore
-    console.log('[AuthService] [PASSO 1] Verificando email existente...');
-    
-    // Busca por email no Firestore (índice necessário)
-    // Como não temos query direta, tentamos autenticar primeiro
-    // A melhor forma é tentar criar e capturar o erro 'email-already-in-use'
+    console.log('[RegistroService] [PASSO 1] Verificando email existente...');
 
     // 2. Cria usuário no Authentication
-    console.log('[AuthService] [PASSO 2] Criando no Firebase Auth...');
+    console.log('[RegistroService] [PASSO 2] Criando no Firebase Auth...');
     
     const userCredential = await createUserWithEmailAndPassword(auth, email, senha);
     const { uid } = userCredential.user;
     
-    console.log('[AuthService] [PASSO 2] ✅ Auth criado! UID:', uid);
+    console.log('[RegistroService] [PASSO 2] ✅ Auth criado! UID:', uid);
 
-    // 3. Salva dados no Firestore
-    console.log('[AuthService] [PASSO 3] Salvando no Firestore...');
+    // 3. Salva dados no Firestore como INATIVO (pendente de aprovação)
+    console.log('[RegistroService] [PASSO 3] Salvando no Firestore (PENDENTE)...');
     
     await setDoc(doc(db, 'usuarios', uid), {
       nome: nome.trim(),
       email: email.toLowerCase().trim(),
       tipo_usuario: 'usuario',
-      ativo: true,
+      ativo: false,  // ← CRIADO COMO INATIVO/PENDENTE
       criado_em: serverTimestamp(),
       atualizado_em: serverTimestamp()
     });
 
-    console.log('[AuthService] [PASSO 3] ✅ Firestore atualizado!');
+    console.log('[RegistroService] [PASSO 3] ✅ Firestore atualizado! (ativo: false)');
 
     // 4. Retorna sucesso
-    console.log('[AuthService] ✅ REGISTRO COMPLETO!');
+    console.log('[RegistroService] ✅ REGISTRO COMPLETO! (pendente de aprovação)');
     
     return {
       success: true,
@@ -58,14 +54,14 @@ export async function registrarUsuario(
         nome: nome.trim(),
         email: email.toLowerCase().trim(),
         tipo_usuario: 'usuario',
-        ativo: true
+        ativo: false  // Indica que está pendente
       }
     };
 
   } catch (error: any) {
-    console.log('[AuthService] ❌ === ERRO NO REGISTRO ===');
-    console.log('[AuthService] Error code:', error?.code);
-    console.log('[AuthService] Error message:', error?.message);
+    console.log('[RegistroService] ❌ === ERRO NO REGISTRO ===');
+    console.log('[RegistroService] Error code:', error?.code);
+    console.log('[RegistroService] Error message:', error?.message);
 
     let errorMessage = 'Erro ao criar conta. Tente novamente.';
 
@@ -83,11 +79,11 @@ export async function registrarUsuario(
 
     // Faz logout se criou usuário mas falhou no Firestore
     if (error?.code && !errorMessage.includes('já está cadastrado')) {
-      console.log('[AuthService] Tentando fazer cleanup...');
+      console.log('[RegistroService] Tentando cleanup...');
       try {
         await signOut(auth);
       } catch (cleanupError) {
-        console.log('[AuthService] Cleanup falhou:', cleanupError?.message);
+        console.log('[RegistroService] Cleanup falhou:', cleanupError?.message);
       }
     }
 

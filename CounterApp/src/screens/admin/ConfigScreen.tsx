@@ -1,55 +1,53 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking } from 'react-native';
 
-interface UsuarioScreenProps {
+interface ConfigScreenProps {
   onLogout: () => void;
   zoomLevel?: number;
 }
 
-export default function UsuarioScreen({ onLogout, zoomLevel = 1 }: UsuarioScreenProps) {
+export default function ConfigScreen({ onLogout, zoomLevel = 1 }: ConfigScreenProps) {
   const scale = (base: number) => base * zoomLevel;
 
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Text style={[styles.title, { fontSize: scale(24) }]}>Área do Usuário</Text>
-        <Text style={[styles.subtitle, { fontSize: scale(14) }]}>Bem-vindo ao sistema!</Text>
+        <Text style={[styles.title, { fontSize: scale(24) }]}>Configurações</Text>
+        <Text style={[styles.subtitle, { fontSize: scale(14) }]}>Preferências do administrador</Text>
       </View>
 
       <View style={styles.content}>
         <View style={styles.card}>
-          <Text style={[styles.cardIcon, { fontSize: scale(32) }]}>✅</Text>
-          <Text style={[styles.cardTitle, { fontSize: scale(16) }]}>Conta Aprovada</Text>
+          <Text style={[styles.cardIcon, { fontSize: scale(32) }]}>🔐</Text>
+          <Text style={[styles.cardTitle, { fontSize: scale(16) }]}>Segurança</Text>
           <Text style={[styles.cardText, { fontSize: scale(14) }]}>
-            Sua conta foi aprovada pelo administrador. Você já pode acessar todas as funcionalidades.
+            Sua conta de administrador está protegida pelo Firebase Authentication.
           </Text>
         </View>
 
         <View style={styles.card}>
-          <Text style={[styles.cardIcon, { fontSize: scale(32) }]}>🎯</Text>
-          <Text style={[styles.cardTitle, { fontSize: scale(16) }]}>Funcionalidades</Text>
+          <Text style={[styles.cardIcon, { fontSize: scale(32) }]}>📱</Text>
+          <Text style={[styles.cardTitle, { fontSize: scale(16) }]}>Sobre o App</Text>
           <Text style={[styles.cardText, { fontSize: scale(14) }]}>
-            Em desenvolvimento. Em breve você poderá:
+            Sistema de Reconhecimento Facial v1.0
           </Text>
-          <View style={styles.featureList}>
-            <Text style={[styles.featureItem, { fontSize: scale(14) }]}>• Fazer reconhecimento facial</Text>
-            <Text style={[styles.featureItem, { fontSize: scale(14) }]}>• Visualizar seu histórico</Text>
-            <Text style={[styles.featureItem, { fontSize: scale(14) }]}>• Gerenciar seu perfil</Text>
-          </View>
+          <Text style={[styles.cardText, { fontSize: scale(14) }]}>
+            Desenvolvido com React Native + Expo
+          </Text>
         </View>
 
         <View style={styles.card}>
-          <Text style={[styles.cardIcon, { fontSize: scale(32) }]}>ℹ️</Text>
-          <Text style={[styles.cardTitle, { fontSize: scale(16) }]}>Status da Conta</Text>
-          <View style={styles.statusRow}>
-            <Text style={[styles.statusLabel, { fontSize: scale(14) }]}>Situação:</Text>
-            <View style={styles.statusBadge}>
-              <Text style={[styles.statusText, { fontSize: scale(12) }]}>Ativa</Text>
-            </View>
-          </View>
+          <Text style={[styles.cardIcon, { fontSize: scale(32) }]}>🔗</Text>
+          <Text style={[styles.cardTitle, { fontSize: scale(16) }]}>Firebase Console</Text>
           <Text style={[styles.cardText, { fontSize: scale(14) }]}>
-            Sua conta está ativa e em bom standing.
+            Acesse o painel do Firebase para gerenciar usuários e configurações.
           </Text>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => Linking.openURL('https://console.firebase.google.com')}
+          >
+            <Text style={[styles.buttonText, { fontSize: scale(14) }]}>Abrir Firebase Console</Text>
+          </TouchableOpacity>
         </View>
 
         <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
@@ -106,32 +104,16 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     lineHeight: 20,
   },
-  featureList: {
-    marginTop: 8,
-    gap: 6,
-  },
-  featureItem: {
-    color: '#374151',
-    lineHeight: 22,
-  },
-  statusRow: {
-    flexDirection: 'row',
+  button: {
+    backgroundColor: '#667eea',
+    borderRadius: 8,
+    paddingVertical: 12,
     alignItems: 'center',
-    gap: 10,
-    marginBottom: 8,
+    marginTop: 12,
   },
-  statusLabel: {
-    color: '#6B7280',
-  },
-  statusBadge: {
-    backgroundColor: '#D1FAE5',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 10,
-  },
-  statusText: {
+  buttonText: {
+    color: '#fff',
     fontWeight: '600',
-    color: '#059669',
   },
   logoutButton: {
     backgroundColor: '#EF4444',

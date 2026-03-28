@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -23,9 +23,13 @@ export default function LoginScreen({ onLoginSuccess, onGoToRegister }: LoginScr
   const [senha, setSenha] = useState('');
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [pendente, setPendente] = useState(false);
+
+  const senhaInputRef = useRef<TextInput>(null);
 
   async function handleLogin() {
     setErro(null);
+    setPendente(false);
     
     if (!email || !senha) {
       setErro('Preencha email e senha.');
@@ -52,6 +56,7 @@ export default function LoginScreen({ onLoginSuccess, onGoToRegister }: LoginScr
         onLoginSuccess(result.usuario.tipo_usuario);
       } else {
         setErro(result.error || 'Erro ao fazer login.');
+        setPendente(result.pendente || false);
       }
     } catch (error: any) {
       setErro('Erro ao fazer login. Verifique sua conexão.');
@@ -84,7 +89,8 @@ export default function LoginScreen({ onLoginSuccess, onGoToRegister }: LoginScr
 
             {/* Mensagem de Erro */}
             {erro && (
-              <View style={styles.errorBox}>
+              <View style={[styles.errorBox, pendente && styles.errorBoxPendente]}>
+                <Text style={styles.errorIcon}>{pendente ? '⏳' : '⚠️'}</Text>
                 <Text style={styles.errorText}>{erro}</Text>
                 <TouchableOpacity onPress={() => setErro(null)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                   <Text style={styles.errorClose}>✕</Text>
@@ -105,12 +111,20 @@ export default function LoginScreen({ onLoginSuccess, onGoToRegister }: LoginScr
                     value={email}
                     onChangeText={(text) => {
                       setEmail(text);
-                      if (erro) setErro(null);
+                      if (erro) {
+                        setErro(null);
+                        setPendente(false);
+                      }
                     }}
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoCorrect={false}
                     editable={!loading}
+                    returnKeyType="next"
+                    onSubmitEditing={() => {
+                      // Move foco para o campo de senha
+                      senhaInputRef.current?.focus();
+                    }}
                   />
                 </View>
               </View>
@@ -120,17 +134,23 @@ export default function LoginScreen({ onLoginSuccess, onGoToRegister }: LoginScr
                 <View style={[styles.inputWrapper, erro && !senha && styles.inputError]}>
                   <Text style={styles.inputIcon}>🔑</Text>
                   <TextInput
+                    ref={senhaInputRef}
                     style={styles.input}
                     placeholder="••••••••"
                     placeholderTextColor="#9CA3AF"
                     value={senha}
                     onChangeText={(text) => {
                       setSenha(text);
-                      if (erro) setErro(null);
+                      if (erro) {
+                        setErro(null);
+                        setPendente(false);
+                      }
                     }}
                     secureTextEntry
                     autoCapitalize="none"
                     editable={!loading}
+                    returnKeyType="done"
+                    onSubmitEditing={handleLogin}
                   />
                 </View>
               </View>
@@ -194,7 +214,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 20,
   },
-  // Card principal
   card: {
     backgroundColor: '#fff',
     borderRadius: 20,
@@ -208,7 +227,6 @@ const styles = StyleSheet.create({
     shadowRadius: 20,
     elevation: 8,
   },
-  // Header
   header: {
     alignItems: 'center',
     marginBottom: 24,
@@ -241,7 +259,6 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     textAlign: 'center',
   },
-  // Error box
   errorBox: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -251,6 +268,14 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 12,
     marginBottom: 16,
+  },
+  errorBoxPendente: {
+    backgroundColor: '#FFFBEB',
+    borderColor: '#FDE68A',
+  },
+  errorIcon: {
+    fontSize: 18,
+    marginRight: 8,
   },
   errorText: {
     flex: 1,
@@ -264,7 +289,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     padding: 4,
   },
-  // Form
   form: {
     gap: 16,
   },
@@ -301,7 +325,6 @@ const styles = StyleSheet.create({
     color: '#1F2937',
     paddingVertical: 12,
   },
-  // Button
   button: {
     backgroundColor: '#667eea',
     borderRadius: 12,
@@ -322,7 +345,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
   },
-  // Register button
   registerButton: {
     paddingVertical: 12,
     alignItems: 'center',
@@ -333,7 +355,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
-  // Credentials
   credentials: {
     marginTop: 24,
     paddingTop: 20,
