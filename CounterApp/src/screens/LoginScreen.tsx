@@ -16,9 +16,10 @@ import { login } from '../services/authService';
 interface LoginScreenProps {
   onLoginSuccess: (tipoUsuario: 'admin' | 'usuario') => void;
   onGoToRegister: () => void;
+  zoomLevel?: number;
 }
 
-export default function LoginScreen({ onLoginSuccess, onGoToRegister }: LoginScreenProps) {
+export default function LoginScreen({ onLoginSuccess, onGoToRegister, zoomLevel = 1 }: LoginScreenProps) {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [loading, setLoading] = useState(false);
@@ -26,6 +27,7 @@ export default function LoginScreen({ onLoginSuccess, onGoToRegister }: LoginScr
   const [pendente, setPendente] = useState(false);
 
   const senhaInputRef = useRef<TextInput>(null);
+  const scale = (base: number) => base * zoomLevel;
 
   async function handleLogin() {
     setErro(null);
@@ -77,23 +79,23 @@ export default function LoginScreen({ onLoginSuccess, onGoToRegister }: LoginScr
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.card}>
+          <View style={[styles.card, { transform: [{ scale: zoomLevel }] }]}>
             {/* Header */}
             <View style={styles.header}>
-              <View style={styles.logoContainer}>
-                <Text style={styles.logoIcon}>🔐</Text>
+              <View style={[styles.logoContainer, { width: scale(70), height: scale(70), borderRadius: scale(35) }]}>
+                <Text style={[styles.logoIcon, { fontSize: scale(32) }]}>🔐</Text>
               </View>
-              <Text style={styles.title}>Bem-vindo</Text>
-              <Text style={styles.subtitle}>Digite suas credenciais para acessar</Text>
+              <Text style={[styles.title, { fontSize: scale(24) }]}>Bem-vindo</Text>
+              <Text style={[styles.subtitle, { fontSize: scale(14) }]}>Digite suas credenciais para acessar</Text>
             </View>
 
             {/* Mensagem de Erro */}
             {erro && (
               <View style={[styles.errorBox, pendente && styles.errorBoxPendente]}>
-                <Text style={styles.errorIcon}>{pendente ? '⏳' : '⚠️'}</Text>
-                <Text style={styles.errorText}>{erro}</Text>
+                <Text style={[styles.errorIcon, { fontSize: scale(18) }]}>{pendente ? '⏳' : '⚠️'}</Text>
+                <Text style={[styles.errorText, { fontSize: scale(13) }]}>{erro}</Text>
                 <TouchableOpacity onPress={() => setErro(null)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                  <Text style={styles.errorClose}>✕</Text>
+                  <Text style={[styles.errorClose, { fontSize: scale(18) }]}>✕</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -101,11 +103,11 @@ export default function LoginScreen({ onLoginSuccess, onGoToRegister }: LoginScr
             {/* Formulário */}
             <View style={styles.form}>
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Email</Text>
+                <Text style={[styles.inputLabel, { fontSize: scale(13) }]}>Email</Text>
                 <View style={[styles.inputWrapper, erro && !email && styles.inputError]}>
-                  <Text style={styles.inputIcon}>📧</Text>
+                  <Text style={[styles.inputIcon, { fontSize: scale(18) }]}>📧</Text>
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, { fontSize: scale(15), paddingVertical: scale(12) }]}
                     placeholder="seu@email.com"
                     placeholderTextColor="#9CA3AF"
                     value={email}
@@ -122,7 +124,6 @@ export default function LoginScreen({ onLoginSuccess, onGoToRegister }: LoginScr
                     editable={!loading}
                     returnKeyType="next"
                     onSubmitEditing={() => {
-                      // Move foco para o campo de senha
                       senhaInputRef.current?.focus();
                     }}
                   />
@@ -130,12 +131,12 @@ export default function LoginScreen({ onLoginSuccess, onGoToRegister }: LoginScr
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Senha</Text>
+                <Text style={[styles.inputLabel, { fontSize: scale(13) }]}>Senha</Text>
                 <View style={[styles.inputWrapper, erro && !senha && styles.inputError]}>
-                  <Text style={styles.inputIcon}>🔑</Text>
+                  <Text style={[styles.inputIcon, { fontSize: scale(18) }]}>🔑</Text>
                   <TextInput
                     ref={senhaInputRef}
-                    style={styles.input}
+                    style={[styles.input, { fontSize: scale(15), paddingVertical: scale(12) }]}
                     placeholder="••••••••"
                     placeholderTextColor="#9CA3AF"
                     value={senha}
@@ -164,7 +165,7 @@ export default function LoginScreen({ onLoginSuccess, onGoToRegister }: LoginScr
                 {loading ? (
                   <ActivityIndicator color="#fff" size="small" />
                 ) : (
-                  <Text style={styles.buttonText}>Entrar</Text>
+                  <Text style={[styles.buttonText, { fontSize: scale(16) }]}>Entrar</Text>
                 )}
               </TouchableOpacity>
 
@@ -174,23 +175,23 @@ export default function LoginScreen({ onLoginSuccess, onGoToRegister }: LoginScr
                 onPress={onGoToRegister}
                 disabled={loading}
               >
-                <Text style={styles.registerButtonText}>Criar uma conta →</Text>
+                <Text style={[styles.registerButtonText, { fontSize: scale(14) }]}>Criar uma conta →</Text>
               </TouchableOpacity>
             </View>
 
             {/* Credenciais */}
             <View style={styles.credentials}>
-              <Text style={styles.credentialsTitle}>Teste:</Text>
+              <Text style={[styles.credentialsTitle, { fontSize: scale(11) }]}>Teste:</Text>
               <View style={styles.badgeRow}>
                 <View style={[styles.badge, styles.badgeAdmin]}>
-                  <Text style={styles.badgeLabel}>Admin</Text>
-                  <Text style={styles.badgeEmail}>admin@exemplo.com</Text>
-                  <Text style={styles.badgePass}>admin123</Text>
+                  <Text style={[styles.badgeLabel, { fontSize: scale(9) }]}>Admin</Text>
+                  <Text style={[styles.badgeEmail, { fontSize: scale(12) }]}>admin@exemplo.com</Text>
+                  <Text style={[styles.badgePass, { fontSize: scale(11) }]}>admin123</Text>
                 </View>
                 <View style={[styles.badge, styles.badgeUser]}>
-                  <Text style={styles.badgeLabel}>User</Text>
-                  <Text style={styles.badgeEmail}>user1@exemplo.com</Text>
-                  <Text style={styles.badgePass}>123456</Text>
+                  <Text style={[styles.badgeLabel, { fontSize: scale(9) }]}>User</Text>
+                  <Text style={[styles.badgeEmail, { fontSize: scale(12) }]}>user1@exemplo.com</Text>
+                  <Text style={[styles.badgePass, { fontSize: scale(11) }]}>123456</Text>
                 </View>
               </View>
             </View>
@@ -232,9 +233,6 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   logoContainer: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
     backgroundColor: '#667eea',
     alignItems: 'center',
     justifyContent: 'center',
@@ -246,16 +244,13 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   logoIcon: {
-    fontSize: 32,
   },
   title: {
-    fontSize: 24,
     fontWeight: 'bold',
     color: '#1F2937',
     marginBottom: 6,
   },
   subtitle: {
-    fontSize: 14,
     color: '#6B7280',
     textAlign: 'center',
   },
@@ -274,19 +269,16 @@ const styles = StyleSheet.create({
     borderColor: '#FDE68A',
   },
   errorIcon: {
-    fontSize: 18,
     marginRight: 8,
   },
   errorText: {
     flex: 1,
-    fontSize: 13,
     color: '#DC2626',
     marginRight: 8,
   },
   errorClose: {
-    fontSize: 18,
-    color: '#DC2626',
     fontWeight: '600',
+    color: '#DC2626',
     padding: 4,
   },
   form: {
@@ -296,7 +288,6 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   inputLabel: {
-    fontSize: 13,
     fontWeight: '600',
     color: '#374151',
     marginLeft: 4,
@@ -316,14 +307,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#FEF2F2',
   },
   inputIcon: {
-    fontSize: 18,
     marginRight: 10,
   },
   input: {
     flex: 1,
-    fontSize: 15,
     color: '#1F2937',
-    paddingVertical: 12,
   },
   button: {
     backgroundColor: '#667eea',
@@ -342,7 +330,6 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#fff',
-    fontSize: 16,
     fontWeight: '700',
   },
   registerButton: {
@@ -352,7 +339,6 @@ const styles = StyleSheet.create({
   },
   registerButtonText: {
     color: '#667eea',
-    fontSize: 14,
     fontWeight: '600',
   },
   credentials: {
@@ -362,7 +348,6 @@ const styles = StyleSheet.create({
     borderTopColor: '#F3F4F6',
   },
   credentialsTitle: {
-    fontSize: 11,
     fontWeight: '600',
     color: '#9CA3AF',
     textAlign: 'center',
@@ -388,20 +373,16 @@ const styles = StyleSheet.create({
     borderColor: '#A7F3D0',
   },
   badgeLabel: {
-    fontSize: 9,
     fontWeight: '700',
     color: '#6B7280',
     marginBottom: 4,
   },
   badgeEmail: {
-    fontSize: 12,
-    color: '#1F2937',
     fontWeight: '500',
+    color: '#1F2937',
     marginBottom: 2,
   },
   badgePass: {
-    fontSize: 11,
     color: '#9CA3AF',
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
 });

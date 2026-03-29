@@ -16,15 +16,18 @@ import { registrarUsuario } from '../services/registroService';
 interface RegisterScreenProps {
   onRegisterSuccess: () => void;
   onBackToLogin: () => void;
+  zoomLevel?: number;
 }
 
-export default function RegisterScreen({ onRegisterSuccess, onBackToLogin }: RegisterScreenProps) {
+export default function RegisterScreen({ onRegisterSuccess, onBackToLogin, zoomLevel = 1 }: RegisterScreenProps) {
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [confirmarSenha, setConfirmarSenha] = useState('');
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+
+  const scale = (base: number) => base * zoomLevel;
 
   function validarCampos(): string | null {
     if (!nome || !email || !senha || !confirmarSenha) {
@@ -89,22 +92,22 @@ export default function RegisterScreen({ onRegisterSuccess, onBackToLogin }: Reg
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.card}>
+          <View style={[styles.card, { transform: [{ scale: zoomLevel }] }]}>
             {/* Header */}
             <View style={styles.header}>
-              <View style={styles.logoContainer}>
-                <Text style={styles.logoIcon}>👤</Text>
+              <View style={[styles.logoContainer, { width: scale(70), height: scale(70), borderRadius: scale(35) }]}>
+                <Text style={[styles.logoIcon, { fontSize: scale(32) }]}>👤</Text>
               </View>
-              <Text style={styles.title}>Criar Conta</Text>
-              <Text style={styles.subtitle}>Preencha os dados para se cadastrar</Text>
+              <Text style={[styles.title, { fontSize: scale(24) }]}>Criar Conta</Text>
+              <Text style={[styles.subtitle, { fontSize: scale(14) }]}>Preencha os dados para se cadastrar</Text>
             </View>
 
             {/* Mensagem de Erro */}
             {erro && (
               <View style={styles.errorBox}>
-                <Text style={styles.errorText}>{erro}</Text>
+                <Text style={[styles.errorText, { fontSize: scale(13) }]}>{erro}</Text>
                 <TouchableOpacity onPress={() => setErro(null)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                  <Text style={styles.errorClose}>✕</Text>
+                  <Text style={[styles.errorClose, { fontSize: scale(18) }]}>✕</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -113,11 +116,11 @@ export default function RegisterScreen({ onRegisterSuccess, onBackToLogin }: Reg
             <View style={styles.form}>
               {/* Nome */}
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Nome completo</Text>
-                <View style={[styles.inputWrapper, erro && !nome && styles.inputError]}>
-                  <Text style={styles.inputIcon}>👤</Text>
+                <Text style={[styles.inputLabel, { fontSize: scale(13) }]}>Nome completo</Text>
+                <View style={styles.inputWrapper}>
+                  <Text style={[styles.inputIcon, { fontSize: scale(18) }]}>👤</Text>
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, { fontSize: scale(15), paddingVertical: scale(12) }]}
                     placeholder="Seu nome"
                     placeholderTextColor="#9CA3AF"
                     value={nome}
@@ -134,11 +137,11 @@ export default function RegisterScreen({ onRegisterSuccess, onBackToLogin }: Reg
 
               {/* Email */}
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Email</Text>
-                <View style={[styles.inputWrapper, erro && !email && styles.inputError]}>
-                  <Text style={styles.inputIcon}>📧</Text>
+                <Text style={[styles.inputLabel, { fontSize: scale(13) }]}>Email</Text>
+                <View style={styles.inputWrapper}>
+                  <Text style={[styles.inputIcon, { fontSize: scale(18) }]}>📧</Text>
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, { fontSize: scale(15), paddingVertical: scale(12) }]}
                     placeholder="seu@email.com"
                     placeholderTextColor="#9CA3AF"
                     value={email}
@@ -156,11 +159,11 @@ export default function RegisterScreen({ onRegisterSuccess, onBackToLogin }: Reg
 
               {/* Senha */}
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Senha</Text>
-                <View style={[styles.inputWrapper, erro && !senha && styles.inputError]}>
-                  <Text style={styles.inputIcon}>🔒</Text>
+                <Text style={[styles.inputLabel, { fontSize: scale(13) }]}>Senha</Text>
+                <View style={styles.inputWrapper}>
+                  <Text style={[styles.inputIcon, { fontSize: scale(18) }]}>🔒</Text>
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, { fontSize: scale(15), paddingVertical: scale(12) }]}
                     placeholder="Mínimo 6 caracteres"
                     placeholderTextColor="#9CA3AF"
                     value={senha}
@@ -177,11 +180,11 @@ export default function RegisterScreen({ onRegisterSuccess, onBackToLogin }: Reg
 
               {/* Confirmar Senha */}
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Confirmar senha</Text>
-                <View style={[styles.inputWrapper, erro && !confirmarSenha && styles.inputError]}>
-                  <Text style={styles.inputIcon}>🔓</Text>
+                <Text style={[styles.inputLabel, { fontSize: scale(13) }]}>Confirmar senha</Text>
+                <View style={styles.inputWrapper}>
+                  <Text style={[styles.inputIcon, { fontSize: scale(18) }]}>🔓</Text>
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, { fontSize: scale(15), paddingVertical: scale(12) }]}
                     placeholder="Repita a senha"
                     placeholderTextColor="#9CA3AF"
                     value={confirmarSenha}
@@ -206,7 +209,7 @@ export default function RegisterScreen({ onRegisterSuccess, onBackToLogin }: Reg
                 {loading ? (
                   <ActivityIndicator color="#fff" size="small" />
                 ) : (
-                  <Text style={styles.buttonText}>Criar Conta</Text>
+                  <Text style={[styles.buttonText, { fontSize: scale(16) }]}>Criar Conta</Text>
                 )}
               </TouchableOpacity>
 
@@ -216,16 +219,16 @@ export default function RegisterScreen({ onRegisterSuccess, onBackToLogin }: Reg
                 onPress={onBackToLogin}
                 disabled={loading}
               >
-                <Text style={styles.backButtonText}>← Voltar para o login</Text>
+                <Text style={[styles.backButtonText, { fontSize: scale(14) }]}>← Voltar para o login</Text>
               </TouchableOpacity>
             </View>
 
             {/* Info Box - Aprovação */}
             <View style={styles.infoBox}>
-              <Text style={styles.infoIcon}>⏳</Text>
+              <Text style={[styles.infoIcon, { fontSize: scale(20) }]}>⏳</Text>
               <View style={styles.infoContent}>
-                <Text style={styles.infoTitle}>Aprovação necessária</Text>
-                <Text style={styles.infoText}>
+                <Text style={[styles.infoTitle, { fontSize: scale(13) }]}>Aprovação necessária</Text>
+                <Text style={[styles.infoText, { fontSize: scale(12) }]}>
                   Após o cadastro, sua conta será revisada pelo administrador. Você receberá acesso após a aprovação.
                 </Text>
               </View>
@@ -268,9 +271,6 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   logoContainer: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
     backgroundColor: '#10B981',
     alignItems: 'center',
     justifyContent: 'center',
@@ -282,16 +282,13 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   logoIcon: {
-    fontSize: 32,
   },
   title: {
-    fontSize: 24,
     fontWeight: 'bold',
     color: '#1F2937',
     marginBottom: 6,
   },
   subtitle: {
-    fontSize: 14,
     color: '#6B7280',
     textAlign: 'center',
   },
@@ -307,14 +304,12 @@ const styles = StyleSheet.create({
   },
   errorText: {
     flex: 1,
-    fontSize: 13,
     color: '#DC2626',
     marginRight: 8,
   },
   errorClose: {
-    fontSize: 18,
-    color: '#DC2626',
     fontWeight: '600',
+    color: '#DC2626',
     padding: 4,
   },
   form: {
@@ -324,7 +319,6 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   inputLabel: {
-    fontSize: 13,
     fontWeight: '600',
     color: '#374151',
     marginLeft: 4,
@@ -339,19 +333,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 2,
   },
-  inputError: {
-    borderColor: '#F87171',
-    backgroundColor: '#FEF2F2',
-  },
   inputIcon: {
-    fontSize: 18,
     marginRight: 10,
   },
   input: {
     flex: 1,
-    fontSize: 15,
     color: '#1F2937',
-    paddingVertical: 12,
   },
   button: {
     backgroundColor: '#10B981',
@@ -370,7 +357,6 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#fff',
-    fontSize: 16,
     fontWeight: '700',
   },
   backButton: {
@@ -380,7 +366,6 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     color: '#6B7280',
-    fontSize: 14,
     fontWeight: '500',
   },
   infoBox: {
@@ -398,19 +383,16 @@ const styles = StyleSheet.create({
     borderColor: '#FDE68A',
   },
   infoIcon: {
-    fontSize: 20,
   },
   infoContent: {
     flex: 1,
   },
   infoTitle: {
-    fontSize: 13,
     fontWeight: '600',
     color: '#92400E',
     marginBottom: 4,
   },
   infoText: {
-    fontSize: 12,
     color: '#78350F',
     lineHeight: 18,
   },

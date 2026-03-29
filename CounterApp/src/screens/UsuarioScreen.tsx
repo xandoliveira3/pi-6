@@ -20,7 +20,7 @@ export default function UsuarioScreen({ onLogout, zoomLevel = 1 }: UsuarioScreen
         <View style={styles.card}>
           <Text style={[styles.cardIcon, { fontSize: scale(32) }]}>✅</Text>
           <Text style={[styles.cardTitle, { fontSize: scale(16) }]}>Conta Aprovada</Text>
-          <Text style={[styles.cardText, { fontSize: scale(14) }]}>
+          <Text style={[styles.cardText, { fontSize: scale(14), lineHeight: scale(20) }]}>
             Sua conta foi aprovada pelo administrador. Você já pode acessar todas as funcionalidades.
           </Text>
         </View>
@@ -28,13 +28,13 @@ export default function UsuarioScreen({ onLogout, zoomLevel = 1 }: UsuarioScreen
         <View style={styles.card}>
           <Text style={[styles.cardIcon, { fontSize: scale(32) }]}>🎯</Text>
           <Text style={[styles.cardTitle, { fontSize: scale(16) }]}>Funcionalidades</Text>
-          <Text style={[styles.cardText, { fontSize: scale(14) }]}>
+          <Text style={[styles.cardText, { fontSize: scale(14), lineHeight: scale(20) }]}>
             Em desenvolvimento. Em breve você poderá:
           </Text>
           <View style={styles.featureList}>
-            <Text style={[styles.featureItem, { fontSize: scale(14) }]}>• Fazer reconhecimento facial</Text>
-            <Text style={[styles.featureItem, { fontSize: scale(14) }]}>• Visualizar seu histórico</Text>
-            <Text style={[styles.featureItem, { fontSize: scale(14) }]}>• Gerenciar seu perfil</Text>
+            <Text style={[styles.featureItem, { fontSize: scale(14), lineHeight: scale(22) }]}>• Fazer reconhecimento facial</Text>
+            <Text style={[styles.featureItem, { fontSize: scale(14), lineHeight: scale(22) }]}>• Visualizar seu histórico</Text>
+            <Text style={[styles.featureItem, { fontSize: scale(14), lineHeight: scale(22) }]}>• Gerenciar seu perfil</Text>
           </View>
         </View>
 
@@ -47,7 +47,7 @@ export default function UsuarioScreen({ onLogout, zoomLevel = 1 }: UsuarioScreen
               <Text style={[styles.statusText, { fontSize: scale(12) }]}>Ativa</Text>
             </View>
           </View>
-          <Text style={[styles.cardText, { fontSize: scale(14) }]}>
+          <Text style={[styles.cardText, { fontSize: scale(14), lineHeight: scale(20) }]}>
             Sua conta está ativa e em bom standing.
           </Text>
         </View>
@@ -104,7 +104,6 @@ const styles = StyleSheet.create({
   },
   cardText: {
     color: '#6B7280',
-    lineHeight: 20,
   },
   featureList: {
     marginTop: 8,
@@ -112,7 +111,6 @@ const styles = StyleSheet.create({
   },
   featureItem: {
     color: '#374151',
-    lineHeight: 22,
   },
   statusRow: {
     flexDirection: 'row',
@@ -149,6 +147,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   logoutIcon: {
+    marginRight: 8,
   },
   logoutText: {
     color: '#fff',
