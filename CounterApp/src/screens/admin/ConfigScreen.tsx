@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Linking } from 'react-native';
 
 interface ConfigScreenProps {
   onLogout: () => void;
@@ -10,7 +10,7 @@ export default function ConfigScreen({ onLogout, zoomLevel = 1 }: ConfigScreenPr
   const scale = (base: number) => base * zoomLevel;
 
   return (
-    <ScrollView style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.header}>
         <Text style={[styles.title, { fontSize: scale(24) }]}>Configurações</Text>
         <Text style={[styles.subtitle, { fontSize: scale(14) }]}>Preferências do administrador</Text>
@@ -55,7 +55,7 @@ export default function ConfigScreen({ onLogout, zoomLevel = 1 }: ConfigScreenPr
           <Text style={[styles.logoutText, { fontSize: scale(16) }]}>Fazer Logout</Text>
         </TouchableOpacity>
       </View>
-    </ScrollView>
+    </View>
   );
 }
 

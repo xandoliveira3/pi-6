@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 
 interface DashboardScreenProps {
   zoomLevel?: number;
@@ -9,7 +9,7 @@ export default function DashboardScreen({ zoomLevel = 1 }: DashboardScreenProps)
   const scale = (base: number) => base * zoomLevel;
 
   return (
-    <ScrollView style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.header}>
         <Text style={[styles.title, { fontSize: scale(24) }]}>Dashboard</Text>
         <Text style={[styles.subtitle, { fontSize: scale(14) }]}>Visão geral do sistema</Text>
@@ -40,7 +40,7 @@ export default function DashboardScreen({ zoomLevel = 1 }: DashboardScreenProps)
           </Text>
         </View>
       </View>
-    </ScrollView>
+    </View>
   );
 }
 

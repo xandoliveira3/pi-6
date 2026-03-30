@@ -3,10 +3,8 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  RefreshControl,
   Modal,
   TextInput,
 } from 'react-native';
@@ -29,7 +27,6 @@ interface UsuariosScreenProps {
 export default function UsuariosScreen({ zoomLevel = 1 }: UsuariosScreenProps) {
   const [usuarios, setUsuarios] = useState<UsuarioCompleto[]>([]);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [menuUsuario, setMenuUsuario] = useState<UsuarioCompleto | null>(null);
   const [confirmacaoVisible, setConfirmacaoVisible] = useState(false);
   const [acaoPendente, setAcaoPendente] = useState<'ativar' | 'inativar' | null>(null);
@@ -37,7 +34,7 @@ export default function UsuariosScreen({ zoomLevel = 1 }: UsuariosScreenProps) {
   
   // Filtro e busca
   const [busca, setBusca] = useState('');
-  const [filtroAtivo, setFiltroAtivo] = useState<'todos' | 'pendentes' | 'ativos' | 'inativos'>('todos');
+  const [filtroAtivo, setFiltroAtivo] = useState<'todos' | 'admin' | 'ativos' | 'inativos'>('todos');
 
   async function carregarUsuarios() {
     setLoading(true);
@@ -102,12 +99,6 @@ export default function UsuariosScreen({ zoomLevel = 1 }: UsuariosScreenProps) {
     }
   }
 
-  async function onRefresh() {
-    setRefreshing(true);
-    await carregarUsuarios();
-    setRefreshing(false);
-  }
-
   // Filtrar usuários
   function filtrarUsuarios() {
     let filtrados = usuarios;
@@ -115,15 +106,15 @@ export default function UsuariosScreen({ zoomLevel = 1 }: UsuariosScreenProps) {
     // Filtro por busca (nome ou email)
     if (busca.trim()) {
       const buscaLower = busca.toLowerCase().trim();
-      filtrados = filtrados.filter(u => 
+      filtrados = filtrados.filter(u =>
         u.nome.toLowerCase().includes(buscaLower) ||
         u.email.toLowerCase().includes(buscaLower)
       );
     }
 
-    // Filtro por status
-    if (filtroAtivo === 'pendentes') {
-      filtrados = filtrados.filter(u => !u.ativo && u.tipo_usuario === 'usuario');
+    // Filtro por status/tipo
+    if (filtroAtivo === 'admin') {
+      filtrados = filtrados.filter(u => u.tipo_usuario === 'admin');
     } else if (filtroAtivo === 'ativos') {
       filtrados = filtrados.filter(u => u.ativo && u.tipo_usuario === 'usuario');
     } else if (filtroAtivo === 'inativos') {
@@ -135,10 +126,9 @@ export default function UsuariosScreen({ zoomLevel = 1 }: UsuariosScreenProps) {
   }
 
   const usuariosFiltrados = filtrarUsuarios();
-  const pendentes = usuariosFiltrados.filter(u => !u.ativo && u.tipo_usuario === 'usuario');
+  const admins = usuariosFiltrados.filter(u => u.tipo_usuario === 'admin');
   const ativos = usuariosFiltrados.filter(u => u.ativo && u.tipo_usuario === 'usuario');
   const inativos = usuariosFiltrados.filter(u => !u.ativo && u.tipo_usuario === 'usuario');
-  const admins = usuariosFiltrados.filter(u => u.tipo_usuario === 'admin');
 
   // Escala de fontes e tamanhos baseada no zoom
   const scale = (base: number) => base * zoomLevel;
@@ -153,12 +143,7 @@ export default function UsuariosScreen({ zoomLevel = 1 }: UsuariosScreenProps) {
   }
 
   return (
-    <ScrollView
-      style={styles.container}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
-    >
+    <View style={styles.wrapper}>
       {/* Mensagem de Feedback */}
       {mensagem && (
         <View style={[styles.mensagemBox, mensagem.tipo === 'sucesso' ? styles.mensagemSucesso : styles.mensagemErro]}>
@@ -187,56 +172,53 @@ export default function UsuariosScreen({ zoomLevel = 1 }: UsuariosScreenProps) {
           )}
         </View>
 
-        {/* Filtros de Status */}
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false}
-          style={styles.filtrosScroll}
-          contentContainerStyle={styles.filtrosContent}
-        >
-          <TouchableOpacity
-            style={[styles.filtroChip, filtroAtivo === 'todos' && styles.filtroChipAtivo]}
-            onPress={() => setFiltroAtivo('todos')}
-          >
-            <Text style={[styles.filtroChipText, filtroAtivo === 'todos' && styles.filtroChipTextAtivo]}>
-              Todos ({usuarios.length})
-            </Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={[styles.filtroChip, filtroAtivo === 'pendentes' && styles.filtroChipAtivo]}
-            onPress={() => setFiltroAtivo('pendentes')}
-          >
-            <Text style={[styles.filtroChipText, filtroAtivo === 'pendentes' && styles.filtroChipTextAtivo]}>
-              ⏳ Pendentes ({pendentes.length})
-            </Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={[styles.filtroChip, filtroAtivo === 'ativos' && styles.filtroChipAtivo]}
-            onPress={() => setFiltroAtivo('ativos')}
-          >
-            <Text style={[styles.filtroChipText, filtroAtivo === 'ativos' && styles.filtroChipTextAtivo]}>
-              ✅ Ativos ({ativos.length})
-            </Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={[styles.filtroChip, filtroAtivo === 'inativos' && styles.filtroChipAtivo]}
-            onPress={() => setFiltroAtivo('inativos')}
-          >
-            <Text style={[styles.filtroChipText, filtroAtivo === 'inativos' && styles.filtroChipTextAtivo]}>
-              🚫 Inativos ({inativos.length})
-            </Text>
-          </TouchableOpacity>
-        </ScrollView>
+        {/* Filtros de Status - Wrap para múltiplas linhas se necessário */}
+        <View style={styles.filtrosWrap}>
+          <View style={styles.filtrosScroll}>
+            <TouchableOpacity
+              style={[styles.filtroChip, filtroAtivo === 'todos' && styles.filtroChipAtivo]}
+              onPress={() => setFiltroAtivo('todos')}
+            >
+              <Text style={[styles.filtroChipText, filtroAtivo === 'todos' && styles.filtroChipTextAtivo]}>
+                Todos ({usuarios.length})
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.filtroChip, filtroAtivo === 'admin' && styles.filtroChipAtivo]}
+              onPress={() => setFiltroAtivo('admin')}
+            >
+              <Text style={[styles.filtroChipText, filtroAtivo === 'admin' && styles.filtroChipTextAtivo]}>
+                👑 Admin ({admins.length})
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.filtroChip, filtroAtivo === 'ativos' && styles.filtroChipAtivo]}
+              onPress={() => setFiltroAtivo('ativos')}
+            >
+              <Text style={[styles.filtroChipText, filtroAtivo === 'ativos' && styles.filtroChipTextAtivo]}>
+                ✅ Ativos ({ativos.length})
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.filtroChip, filtroAtivo === 'inativos' && styles.filtroChipAtivo]}
+              onPress={() => setFiltroAtivo('inativos')}
+            >
+              <Text style={[styles.filtroChipText, filtroAtivo === 'inativos' && styles.filtroChipTextAtivo]}>
+                🚫 Inativos ({inativos.length})
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
 
       {/* Resumo */}
       <View style={styles.resumoContainer}>
-        <View style={styles.resumoCard}>
-          <Text style={[styles.resumoNumero, { fontSize: scale(24) }]}>{pendentes.length}</Text>
-          <Text style={[styles.resumoLabel, { fontSize: scale(11) }]}>Pendentes</Text>
+        <View style={[styles.resumoCard, styles.resumoCardAdmin]}>
+          <Text style={[styles.resumoNumero, styles.resumoNumeroAdmin, { fontSize: scale(24) }]}>{admins.length}</Text>
+          <Text style={[styles.resumoLabel, styles.resumoLabelAdmin, { fontSize: scale(11) }]}>Admins</Text>
         </View>
         <View style={[styles.resumoCard, styles.resumoCardAtivo]}>
           <Text style={[styles.resumoNumero, styles.resumoNumeroAtivo, { fontSize: scale(24) }]}>{ativos.length}</Text>
@@ -245,10 +227,6 @@ export default function UsuariosScreen({ zoomLevel = 1 }: UsuariosScreenProps) {
         <View style={[styles.resumoCard, styles.resumoCardInativo]}>
           <Text style={[styles.resumoNumero, styles.resumoNumeroInativo, { fontSize: scale(24) }]}>{inativos.length}</Text>
           <Text style={[styles.resumoLabel, styles.resumoLabelInativo, { fontSize: scale(11) }]}>Inativos</Text>
-        </View>
-        <View style={[styles.resumoCard, styles.resumoCardAdmin]}>
-          <Text style={[styles.resumoNumero, styles.resumoNumeroAdmin, { fontSize: scale(24) }]}>{admins.length}</Text>
-          <Text style={[styles.resumoLabel, styles.resumoLabelAdmin, { fontSize: scale(11) }]}>Admins</Text>
         </View>
       </View>
 
@@ -277,40 +255,6 @@ export default function UsuariosScreen({ zoomLevel = 1 }: UsuariosScreenProps) {
               <View style={styles.cardStatus}>
                 <View style={styles.statusBadgeAdmin}>
                   <Text style={[styles.statusBadgeText, styles.statusBadgeTextAdmin, { fontSize: scale(11) }]}>Admin</Text>
-                </View>
-              </View>
-            </View>
-          ))}
-        </View>
-      )}
-
-      {/* Pendentes de Aprovação */}
-      {(pendentes.length > 0 && (filtroAtivo === 'todos' || filtroAtivo === 'pendentes')) && (
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { fontSize: scale(15) }]}>⏳ Pendentes de Aprovação</Text>
-          {pendentes.map((usuario) => (
-            <View key={usuario.id} style={styles.card}>
-              <View style={styles.cardHeader}>
-                <View style={[styles.avatar, { width: scale(44), height: scale(44), borderRadius: scale(22) }]}>
-                  <Text style={[styles.avatarText, { fontSize: scale(18) }]}>
-                    {usuario.nome.charAt(0).toUpperCase()}
-                  </Text>
-                </View>
-                <View style={styles.cardInfo}>
-                  <Text style={[styles.cardNome, { fontSize: scale(15) }]}>{usuario.nome}</Text>
-                  <Text style={[styles.cardEmail, { fontSize: scale(13) }]}>{usuario.email}</Text>
-                </View>
-                <TouchableOpacity
-                  style={styles.menuButton}
-                  onPress={() => abrirMenu(usuario)}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                  <Text style={[styles.menuButtonIcon, { fontSize: scale(20) }]}>⚙️</Text>
-                </TouchableOpacity>
-              </View>
-              <View style={styles.cardStatus}>
-                <View style={styles.statusBadgePendente}>
-                  <Text style={[styles.statusBadgeText, { fontSize: scale(11) }]}>Pendente</Text>
                 </View>
               </View>
             </View>
@@ -464,13 +408,16 @@ export default function UsuariosScreen({ zoomLevel = 1 }: UsuariosScreenProps) {
           </View>
         </View>
       </Modal>
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  wrapper: {
     flex: 1,
+    backgroundColor: '#F3F4F6',
+  },
+  container: {
     backgroundColor: '#F3F4F6',
   },
   loadingContainer: {
@@ -544,7 +491,12 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   filtrosScroll: {
-    maxHeight: 44,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  filtrosWrap: {
+    marginTop: 8,
   },
   filtrosContent: {
     gap: 8,

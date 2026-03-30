@@ -13,7 +13,7 @@ web-build/
 *.jks
 *.p8
 *.p12
-*.key
+*.p12
 *.mobileprovision
 
 # Metro
@@ -52,3 +52,6 @@ coverage/
 # Temporary files
 *.log
 *.tmp
+
+# Documentação interna (não commitar)
+OBJETIVO.md

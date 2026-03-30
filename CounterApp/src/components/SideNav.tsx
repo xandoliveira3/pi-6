@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TouchableOpacity, StyleSheet, Text, ScrollView } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
 
 interface SideNavProps {
   activeTab: string;
@@ -20,7 +20,7 @@ export default function SideNav({ activeTab, onTabPress }: SideNavProps) {
         <Text style={styles.headerTitle}>Admin</Text>
       </View>
       
-      <ScrollView style={styles.menu}>
+      <View style={styles.menu}>
         {menuItems.map((item) => (
           <TouchableOpacity
             key={item.id}
@@ -39,7 +39,7 @@ export default function SideNav({ activeTab, onTabPress }: SideNavProps) {
             </Text>
           </TouchableOpacity>
         ))}
-      </ScrollView>
+      </View>
 
       <TouchableOpacity
         style={styles.logoutButton}
@@ -83,8 +83,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   menu: {
-    flex: 1,
     width: '100%',
+    paddingBottom: 8,
   },
   menuItem: {
     alignItems: 'center',

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 
 interface UsuarioScreenProps {
   onLogout: () => void;
@@ -10,7 +10,7 @@ export default function UsuarioScreen({ onLogout, zoomLevel = 1 }: UsuarioScreen
   const scale = (base: number) => base * zoomLevel;
 
   return (
-    <ScrollView style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.header}>
         <Text style={[styles.title, { fontSize: scale(24) }]}>Área do Usuário</Text>
         <Text style={[styles.subtitle, { fontSize: scale(14) }]}>Bem-vindo ao sistema!</Text>
@@ -57,7 +57,7 @@ export default function UsuarioScreen({ onLogout, zoomLevel = 1 }: UsuarioScreen
           <Text style={[styles.logoutText, { fontSize: scale(16) }]}>Fazer Logout</Text>
         </TouchableOpacity>
       </View>
-    </ScrollView>
+    </View>
   );
 }
 

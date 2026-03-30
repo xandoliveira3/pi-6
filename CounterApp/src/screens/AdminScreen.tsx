@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, ScrollView, Dimensions } from 'react-native';
 import SideNav from '../components/SideNav';
 import UsuariosScreen from './admin/UsuariosScreen';
 import DashboardScreen from './admin/DashboardScreen';
 import ConfigScreen from './admin/ConfigScreen';
+
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface AdminScreenProps {
   onLogout: () => void;
@@ -37,9 +39,13 @@ export default function AdminScreen({ onLogout, zoomLevel = 1 }: AdminScreenProp
   return (
     <View style={styles.container}>
       <SideNav activeTab={activeTab} onTabPress={handleTabPress} />
-      <View style={styles.content}>
+      <ScrollView 
+        style={styles.contentWrapper}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={true}
+      >
         {renderScreen()}
-      </View>
+      </ScrollView>
     </View>
   );
 }
@@ -50,7 +56,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: '#F3F4F6',
   },
-  content: {
+  contentWrapper: {
     flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    minHeight: SCREEN_HEIGHT,
   },
 });

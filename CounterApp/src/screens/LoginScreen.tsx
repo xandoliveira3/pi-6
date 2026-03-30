@@ -8,7 +8,6 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  ScrollView,
   SafeAreaView,
 } from 'react-native';
 import { login } from '../services/authService';
@@ -25,6 +24,7 @@ export default function LoginScreen({ onLoginSuccess, onGoToRegister, zoomLevel 
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [pendente, setPendente] = useState(false);
+  const [mostrarSenha, setMostrarSenha] = useState(false);
 
   const senhaInputRef = useRef<TextInput>(null);
   const scale = (base: number) => base * zoomLevel;
@@ -74,11 +74,7 @@ export default function LoginScreen({ onLoginSuccess, onGoToRegister, zoomLevel 
         style={styles.container}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
-        <ScrollView 
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
+        <View style={styles.scrollContent}>
           <View style={[styles.card, { transform: [{ scale: zoomLevel }] }]}>
             {/* Header */}
             <View style={styles.header}>
@@ -133,6 +129,15 @@ export default function LoginScreen({ onLoginSuccess, onGoToRegister, zoomLevel 
               <View style={styles.inputGroup}>
                 <Text style={[styles.inputLabel, { fontSize: scale(13) }]}>Senha</Text>
                 <View style={[styles.inputWrapper, erro && !senha && styles.inputError]}>
+                  <TouchableOpacity
+                    onPress={() => setMostrarSenha(!mostrarSenha)}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.eyeIcon, { fontSize: scale(18) }]}>
+                      {mostrarSenha ? '👁️' : '🙈'}
+                    </Text>
+                  </TouchableOpacity>
                   <Text style={[styles.inputIcon, { fontSize: scale(18) }]}>🔑</Text>
                   <TextInput
                     ref={senhaInputRef}
@@ -147,7 +152,7 @@ export default function LoginScreen({ onLoginSuccess, onGoToRegister, zoomLevel 
                         setPendente(false);
                       }
                     }}
-                    secureTextEntry
+                    secureTextEntry={!mostrarSenha}
                     autoCapitalize="none"
                     editable={!loading}
                     returnKeyType="done"
@@ -196,7 +201,7 @@ export default function LoginScreen({ onLoginSuccess, onGoToRegister, zoomLevel 
               </View>
             </View>
           </View>
-        </ScrollView>
+        </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -308,6 +313,9 @@ const styles = StyleSheet.create({
   },
   inputIcon: {
     marginRight: 10,
+  },
+  eyeIcon: {
+    marginRight: 8,
   },
   input: {
     flex: 1,

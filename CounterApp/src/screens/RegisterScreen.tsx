@@ -8,7 +8,6 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  ScrollView,
   SafeAreaView,
 } from 'react-native';
 import { registrarUsuario } from '../services/registroService';
@@ -26,6 +25,8 @@ export default function RegisterScreen({ onRegisterSuccess, onBackToLogin, zoomL
   const [confirmarSenha, setConfirmarSenha] = useState('');
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [mostrarSenha, setMostrarSenha] = useState(false);
+  const [mostrarConfirmarSenha, setMostrarConfirmarSenha] = useState(false);
 
   const scale = (base: number) => base * zoomLevel;
 
@@ -87,11 +88,7 @@ export default function RegisterScreen({ onRegisterSuccess, onBackToLogin, zoomL
         style={styles.container}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
-        <ScrollView 
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
+        <View style={styles.scrollContent}>
           <View style={[styles.card, { transform: [{ scale: zoomLevel }] }]}>
             {/* Header */}
             <View style={styles.header}>
@@ -161,6 +158,15 @@ export default function RegisterScreen({ onRegisterSuccess, onBackToLogin, zoomL
               <View style={styles.inputGroup}>
                 <Text style={[styles.inputLabel, { fontSize: scale(13) }]}>Senha</Text>
                 <View style={styles.inputWrapper}>
+                  <TouchableOpacity
+                    onPress={() => setMostrarSenha(!mostrarSenha)}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.eyeIcon, { fontSize: scale(18) }]}>
+                      {mostrarSenha ? '👁️' : '🙈'}
+                    </Text>
+                  </TouchableOpacity>
                   <Text style={[styles.inputIcon, { fontSize: scale(18) }]}>🔒</Text>
                   <TextInput
                     style={[styles.input, { fontSize: scale(15), paddingVertical: scale(12) }]}
@@ -171,7 +177,7 @@ export default function RegisterScreen({ onRegisterSuccess, onBackToLogin, zoomL
                       setSenha(text);
                       if (erro) setErro(null);
                     }}
-                    secureTextEntry
+                    secureTextEntry={!mostrarSenha}
                     autoCapitalize="none"
                     editable={!loading}
                   />
@@ -182,6 +188,15 @@ export default function RegisterScreen({ onRegisterSuccess, onBackToLogin, zoomL
               <View style={styles.inputGroup}>
                 <Text style={[styles.inputLabel, { fontSize: scale(13) }]}>Confirmar senha</Text>
                 <View style={styles.inputWrapper}>
+                  <TouchableOpacity
+                    onPress={() => setMostrarConfirmarSenha(!mostrarConfirmarSenha)}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.eyeIcon, { fontSize: scale(18) }]}>
+                      {mostrarConfirmarSenha ? '👁️' : '🙈'}
+                    </Text>
+                  </TouchableOpacity>
                   <Text style={[styles.inputIcon, { fontSize: scale(18) }]}>🔓</Text>
                   <TextInput
                     style={[styles.input, { fontSize: scale(15), paddingVertical: scale(12) }]}
@@ -192,7 +207,7 @@ export default function RegisterScreen({ onRegisterSuccess, onBackToLogin, zoomL
                       setConfirmarSenha(text);
                       if (erro) setErro(null);
                     }}
-                    secureTextEntry
+                    secureTextEntry={!mostrarConfirmarSenha}
                     autoCapitalize="none"
                     editable={!loading}
                   />
@@ -234,7 +249,7 @@ export default function RegisterScreen({ onRegisterSuccess, onBackToLogin, zoomL
               </View>
             </View>
           </View>
-        </ScrollView>
+        </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -335,6 +350,9 @@ const styles = StyleSheet.create({
   },
   inputIcon: {
     marginRight: 10,
+  },
+  eyeIcon: {
+    marginRight: 8,
   },
   input: {
     flex: 1,
