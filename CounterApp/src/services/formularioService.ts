@@ -45,36 +45,90 @@ export async function listarFormularios(): Promise<Formulario[]> {
   }
 }
 
-export async function criarFormulario(titulo: string, descricao: string): Promise<{ success: boolean; id?: string; error?: string }> {
+export async function criarFormulario(
+  titulo: string, 
+  descricao: string,
+  perguntas?: Pergunta[]
+): Promise<{ success: boolean; id?: string; error?: string }> {
   try {
-    const formularioRef = doc(collection(db, 'formularios'));
+    console.log('[formularioService] criarFormulario:', { titulo, perguntasCount: perguntas?.length || 0 });
     
-    await setDoc(formularioRef, {
+    const formularioRef = doc(collection(db, 'formularios'));
+
+    // Filtra undefined das perguntas
+    const perguntasFiltradas = (perguntas || []).map((pergunta: any) => {
+      const perguntaFiltrada: any = {};
+      Object.keys(pergunta).forEach(k => {
+        if (pergunta[k] !== undefined) {
+          perguntaFiltrada[k] = pergunta[k];
+        }
+      });
+      return perguntaFiltrada;
+    });
+
+    const dados = {
       titulo: titulo.trim(),
       descricao: descricao.trim(),
       ativo: true,
-      perguntas: [],
+      perguntas: perguntasFiltradas,
       criado_em: serverTimestamp(),
       atualizado_em: serverTimestamp()
-    });
+    };
+    
+    console.log('[formularioService] Dados para salvar:', dados);
+
+    await setDoc(formularioRef, dados);
+    
+    console.log('[formularioService] Formulário criado com ID:', formularioRef.id);
 
     return { success: true, id: formularioRef.id };
   } catch (error: any) {
+    console.error('[formularioService] Erro ao criar formulário:', error.message);
     return { success: false, error: 'Erro ao criar formulário.' };
   }
 }
 
 export async function atualizarFormulario(id: string, dados: Partial<Formulario>): Promise<{ success: boolean; error?: string }> {
   try {
-    const formularioRef = doc(db, 'formularios', id);
+    console.log('[formularioService] atualizarFormulario:', { id, dados });
     
+    // Filtra valores undefined (updateDoc não aceita undefined)
+    const dadosFiltrados: any = {};
+    Object.keys(dados).forEach(key => {
+      let value = dados[key as keyof typeof dados];
+      
+      // Se for array de perguntas, filtra undefined de cada pergunta
+      if (key === 'perguntas' && Array.isArray(value)) {
+        value = value.map((pergunta: any) => {
+          const perguntaFiltrada: any = {};
+          Object.keys(pergunta).forEach(k => {
+            if (pergunta[k] !== undefined) {
+              perguntaFiltrada[k] = pergunta[k];
+            }
+          });
+          return perguntaFiltrada;
+        });
+      }
+      
+      if (value !== undefined) {
+        dadosFiltrados[key] = value;
+      }
+    });
+    
+    console.log('[formularioService] dadosFiltrados:', dadosFiltrados);
+    
+    const formularioRef = doc(db, 'formularios', id);
+
     await updateDoc(formularioRef, {
-      ...dados,
+      ...dadosFiltrados,
       atualizado_em: serverTimestamp()
     });
+    
+    console.log('[formularioService] Formulário atualizado com sucesso');
 
     return { success: true };
   } catch (error: any) {
+    console.error('[formularioService] Erro ao atualizar formulário:', error.message);
     return { success: false, error: 'Erro ao atualizar formulário.' };
   }
 }

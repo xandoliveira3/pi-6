@@ -10,7 +10,8 @@ export default function SideNav({ activeTab, onTabPress }: SideNavProps) {
   const menuItems = [
     { id: 'usuarios', icon: '👥', label: 'Usuários' },
     { id: 'formularios', icon: '📋', label: 'Forms' },
-    { id: 'dashboard', icon: '📊', label: 'Dashboard' },
+    { id: 'respostas', icon: '📊', label: 'Respostas' },
+    { id: 'dashboard', icon: '📈', label: 'Dashboard' },
     { id: 'config', icon: '⚙️', label: 'Config' },
   ];
 

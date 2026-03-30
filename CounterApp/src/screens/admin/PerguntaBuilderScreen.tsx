@@ -42,17 +42,29 @@ export default function PerguntaBuilderScreen({
       return;
     }
 
+    // Garante que não há campos undefined
     const novaPergunta: Pergunta = {
       id: Date.now().toString(),
       tipo,
       titulo: titulo.trim(),
-      descricao: descricao.trim(),
+      descricao: descricao.trim() || undefined,
       obrigatoria,
       tipoAlternativa: tipo === 'alternativa' ? tipoAlternativa : undefined,
       opcoes: tipo === 'alternativa' && tipoAlternativa === 'texto' ? opcoesTexto.filter(o => o.trim()) : undefined,
     };
 
-    onSalvar(novaPergunta);
+    // Remove campos undefined
+    const perguntaLimpa: any = {};
+    Object.keys(novaPergunta).forEach(key => {
+      const value = (novaPergunta as any)[key];
+      if (value !== undefined) {
+        perguntaLimpa[key] = value;
+      }
+    });
+
+    console.log('[PerguntaBuilder] Salvando pergunta:', perguntaLimpa);
+
+    onSalvar(perguntaLimpa as Pergunta);
   }
 
   function handleAddOpcao() {

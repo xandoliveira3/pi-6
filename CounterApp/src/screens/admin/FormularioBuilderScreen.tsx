@@ -32,21 +32,42 @@ export default function FormularioBuilderScreen({
   const [titulo, setTitulo] = useState(formulario?.titulo || '');
   const [descricao, setDescricao] = useState(formulario?.descricao || '');
   const [perguntas, setPerguntas] = useState<Pergunta[]>(formulario?.perguntas || []);
-  
-  // Navegação para tela de pergunta
   const [mostrarPerguntaBuilder, setMostrarPerguntaBuilder] = useState(false);
   const [perguntaIndex, setPerguntaIndex] = useState<number>(-1);
 
   async function handleSalvarFormulario() {
+    if (!titulo.trim()) {
+      Alert.alert('Atenção', 'Digite um título para o formulário.');
+      return;
+    }
+
+    console.log('[FormularioBuilder] handleSalvarFormulario chamado');
+    console.log('[FormularioBuilder] titulo:', titulo);
+    console.log('[FormularioBuilder] descricao:', descricao);
+    console.log('[FormularioBuilder] perguntas:', perguntas);
+    console.log('[FormularioBuilder] perguntas.length:', perguntas.length);
 
     try {
       if (formulario) {
-        await atualizarFormulario(formulario.id, { titulo, descricao, perguntas });
+        console.log('[FormularioBuilder] Atualizando formulário:', formulario.id);
+        // Garante que todos os campos estão definidos
+        await atualizarFormulario(formulario.id, { 
+          titulo: titulo.trim(), 
+          descricao: descricao.trim(), 
+          perguntas: perguntas 
+        });
       } else {
-        await criarFormulario(titulo, descricao);
+        console.log('[FormularioBuilder] Criando novo formulário');
+        const result = await criarFormulario(titulo.trim(), descricao.trim(), perguntas);
+        if (!result.success) {
+          Alert.alert('Erro', result.error || 'Não foi possível criar o formulário.');
+          return;
+        }
+        console.log('[FormularioBuilder] Formulário criado com ID:', result.id);
       }
       onSalvar();
     } catch (error) {
+      console.error('[FormularioBuilder] Erro:', error);
       Alert.alert('Erro', 'Não foi possível salvar o formulário.');
     }
   }
@@ -67,14 +88,21 @@ export default function FormularioBuilderScreen({
   }
 
   function handleSalvarPergunta(pergunta: Pergunta) {
+    console.log('[FormularioBuilder] Salvando pergunta:', pergunta);
+    console.log('[FormularioBuilder] perguntaIndex:', perguntaIndex);
+    console.log('[FormularioBuilder] perguntas antes:', perguntas.length);
+    
     if (perguntaIndex >= 0 && perguntaIndex < perguntas.length) {
       // Editar pergunta existente
       const novas = [...perguntas];
       novas[perguntaIndex] = pergunta;
       setPerguntas(novas);
+      console.log('[FormularioBuilder] Pergunta editada, total:', novas.length);
     } else {
       // Adicionar nova pergunta
-      setPerguntas([...perguntas, pergunta]);
+      const novas = [...perguntas, pergunta];
+      setPerguntas(novas);
+      console.log('[FormularioBuilder] Pergunta adicionada, total:', novas.length);
     }
     handleVoltarPergunta();
   }

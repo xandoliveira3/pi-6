@@ -6,6 +6,7 @@ import DashboardScreen from './admin/DashboardScreen';
 import ConfigScreen from './admin/ConfigScreen';
 import FormulariosScreen from './admin/FormulariosScreen';
 import FormularioBuilderScreen from './admin/FormularioBuilderScreen';
+import RespostasScreen from './admin/RespostasScreen';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -67,6 +68,10 @@ export default function AdminScreen({ onLogout, zoomLevel = 1 }: AdminScreenProp
           onEditarFormulario={handleEditarFormulario}
         />
       );
+    }
+
+    if (activeTab === 'respostas') {
+      return <RespostasScreen zoomLevel={zoomLevel} />;
     }
 
     switch (activeTab) {
