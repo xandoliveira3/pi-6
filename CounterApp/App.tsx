@@ -25,6 +25,40 @@ export default function App() {
   const panResponder = useRef<any>(null);
   const offsetRef = useRef({ x: 0, y: 0 });
   
+  // Barra de zoom arrastável
+  const [zoomBarPos, setZoomBarPos] = useState({ x: SCREEN_WIDTH - 80, y: 100 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
+  const zoomBarPan = useRef<any>(null);
+  
+  // Inicializar PanResponder da barra de zoom (apenas no handle)
+  useEffect(() => {
+    zoomBarPan.current = PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponderCapture: () => true,
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        // Só ativa se mover mais que 2px
+        return Math.abs(gestureState.dx) > 2 || Math.abs(gestureState.dy) > 2;
+      },
+      onMoveShouldSetPanResponderCapture: () => true,
+      onPanResponderGrant: () => {
+        setIsDragging(true);
+      },
+      onPanResponderMove: (_, gestureState) => {
+        // Mover barra com o gesto - limita às bordas da tela
+        const newX = Math.max(0, Math.min(SCREEN_WIDTH - 70, gestureState.moveX - 35));
+        const newY = Math.max(0, Math.min(SCREEN_HEIGHT - 100, gestureState.moveY - 15));
+        setZoomBarPos({ x: newX, y: newY });
+      },
+      onPanResponderRelease: () => {
+        setIsDragging(false);
+      },
+      onPanResponderTerminate: () => {
+        setIsDragging(false);
+      },
+    });
+  }, []);
+  
   // Suavização do movimento - 1 = sem suavização, controle total
   const smoothingFactor = 1.0; // Controle total do usuário
 
@@ -137,7 +171,8 @@ export default function App() {
   function handleZoomOut() {
     setZoomLevel(prev => {
       const newZoom = Math.max(prev - 0.1, 0.8);
-      if (newZoom <= 1.01) {
+      // Reset offset quando zoom volta para 1.0 ou menos
+      if (newZoom <= 1.0) {
         setOffsetX(0);
         setOffsetY(0);
         offsetRef.current = { x: 0, y: 0 };
@@ -151,6 +186,10 @@ export default function App() {
     setOffsetX(0);
     setOffsetY(0);
     offsetRef.current = { x: 0, y: 0 };
+  }
+
+  function handleToggleExpand() {
+    setIsExpanded(!isExpanded);
   }
 
   if (loading) {
@@ -205,43 +244,91 @@ export default function App() {
     <View style={styles.container}>
       <StatusBar style="light" />
 
-      {/* Barra de Zoom - Lado Direito (todas as plataformas) */}
+      {/* Barra de Zoom - Arrastável (todas as plataformas) */}
       {mostrarZoom && (
-        <View style={styles.zoomBarContainer}>
-          <View style={styles.zoomBar}>
-            <TouchableOpacity
-              style={[styles.zoomButton, zoomLevel <= 0.8 && styles.zoomButtonDisabled]}
-              onPress={handleZoomOut}
-              disabled={zoomLevel <= 0.8}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.zoomButtonText}>🔍</Text>
-              <Text style={[styles.zoomButtonText, { fontSize: 12, marginLeft: 4 }]}>-</Text>
-            </TouchableOpacity>
-
-            <View style={styles.zoomIndicator}>
-              <Text style={styles.zoomIcon}>👁️</Text>
-              <Text style={styles.zoomValue}>{Math.round(zoomLevel * 100)}%</Text>
-            </View>
-
-            <TouchableOpacity
-              style={[styles.zoomButton, zoomLevel >= 2.0 && styles.zoomButtonDisabled]}
-              onPress={handleZoomIn}
-              disabled={zoomLevel >= 2.0}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.zoomButtonText}>🔍</Text>
-              <Text style={[styles.zoomButtonText, { fontSize: 12, marginLeft: 4 }]}>+</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.zoomResetButton}
-              onPress={handleResetZoom}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.zoomResetText}>Reset</Text>
-            </TouchableOpacity>
+        <View
+          style={[
+            styles.zoomBarContainer,
+            {
+              left: zoomBarPos.x,
+              top: zoomBarPos.y,
+            },
+          ]}
+        >
+          {/* Handle de arraste (topo) */}
+          <View
+            style={[
+              styles.zoomDragHandle,
+              isDragging && styles.zoomDragHandleActive,
+            ]}
+            {...zoomBarPan.current?.panHandlers}
+            pointerEvents="box-only"
+          >
+            <Text style={[styles.dragHandleIcon, isDragging && styles.dragHandleIconActive]}>⠿</Text>
           </View>
+          
+          {/* Botões de zoom (expansível) */}
+          {isExpanded && (
+            <View style={styles.zoomButtonsContainer}>
+              <TouchableOpacity
+                style={[styles.zoomButton, zoomLevel <= 0.8 && styles.zoomButtonDisabled]}
+                onPress={handleZoomOut}
+                disabled={zoomLevel <= 0.8}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.zoomButtonText}>🔍</Text>
+                <Text style={[styles.zoomButtonText, { fontSize: 12, marginLeft: 4 }]}>-</Text>
+              </TouchableOpacity>
+
+              <View style={styles.zoomIndicator}>
+                <Text style={styles.zoomIcon}>👁️</Text>
+                <Text style={styles.zoomValue}>{Math.round(zoomLevel * 100)}%</Text>
+              </View>
+
+              <TouchableOpacity
+                style={[styles.zoomButton, zoomLevel >= 2.0 && styles.zoomButtonDisabled]}
+                onPress={handleZoomIn}
+                disabled={zoomLevel >= 2.0}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.zoomButtonText}>🔍</Text>
+                <Text style={[styles.zoomButtonText, { fontSize: 12, marginLeft: 4 }]}>+</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.zoomResetButton}
+                onPress={handleResetZoom}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.zoomResetText}>Reset</Text>
+              </TouchableOpacity>
+
+              {/* Separador */}
+              <View style={styles.toggleSeparator} />
+
+              {/* Botão de Expandir/Recolher */}
+              <TouchableOpacity
+                style={styles.toggleExpandButton}
+                onPress={handleToggleExpand}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.toggleExpandText}>
+                  {isExpanded ? 'Recolher ▲' : 'Expandir ▼'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Botão de Expandir (quando recolhido) */}
+          {!isExpanded && (
+            <TouchableOpacity
+              style={styles.toggleExpandButtonCollapsed}
+              onPress={handleToggleExpand}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.toggleExpandIcon}>▲</Text>
+            </TouchableOpacity>
+          )}
         </View>
       )}
 
@@ -252,13 +339,14 @@ export default function App() {
         showsVerticalScrollIndicator={true}
         scrollEnabled={true}
         nestedScrollEnabled={true}
+        contentOffset={{ x: 0, y: 0 }}
       >
         <View
           style={[
             styles.scaledContent,
             {
-              width: SCREEN_WIDTH * zoomLevel,
-              minHeight: SCREEN_HEIGHT * zoomLevel,
+              width: Math.max(SCREEN_WIDTH, SCREEN_WIDTH * zoomLevel),
+              minHeight: Math.max(SCREEN_HEIGHT, SCREEN_HEIGHT * zoomLevel),
               transform: [
                 { translateX: offsetX },
                 { translateY: offsetY },
@@ -268,10 +356,14 @@ export default function App() {
           {...(zoomLevel > 1 ? panResponder.current?.panHandlers : {})}
         >
           <View style={[styles.innerContent, {
-            width: SCREEN_WIDTH * zoomLevel,
-            minHeight: SCREEN_HEIGHT * zoomLevel,
+            width: Math.max(SCREEN_WIDTH, SCREEN_WIDTH * zoomLevel),
+            minHeight: Math.max(SCREEN_HEIGHT, SCREEN_HEIGHT * zoomLevel),
           }]}>
-            <View style={{ width: SCREEN_WIDTH * zoomLevel, minHeight: SCREEN_HEIGHT * zoomLevel }}>
+            <View style={{ 
+              width: SCREEN_WIDTH, 
+              minHeight: SCREEN_HEIGHT,
+              flex: zoomLevel <= 1 ? 1 : undefined,
+            }}>
               {renderScreen()}
             </View>
           </View>
@@ -299,14 +391,18 @@ const styles = StyleSheet.create({
   contentContainerWithPan: {
     flex: 1,
     backgroundColor: 'transparent',
+    overflow: 'hidden',
   },
   scrollContentContainer: {
     flexGrow: 1,
     backgroundColor: 'transparent',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
   },
   scaledContent: {
     minWidth: SCREEN_WIDTH,
     minHeight: SCREEN_HEIGHT,
+    justifyContent: 'flex-start',
   },
   innerContent: {
     minWidth: SCREEN_WIDTH,
@@ -314,14 +410,47 @@ const styles = StyleSheet.create({
   },
   zoomBarContainer: {
     position: 'absolute',
-    right: 10,
-    top: '50%',
-    transform: [{ translateY: -70 }],
     zIndex: 1000,
   },
-  zoomBar: {
+  zoomDragHandle: {
+    backgroundColor: '#667eea',
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 30,
+    cursor: 'pointer',
+    userSelect: 'none',
+    shadowColor: '#667eea',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  zoomDragHandleActive: {
+    backgroundColor: '#5568d3',
+    shadowColor: '#5568d3',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  dragHandleIcon: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '700',
+    lineHeight: 18,
+    userSelect: 'none',
+  },
+  dragHandleIconActive: {
+    color: '#fff',
+  },
+  zoomButtonsContainer: {
     backgroundColor: '#fff',
-    borderRadius: 16,
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
     paddingVertical: 12,
     paddingHorizontal: 8,
     gap: 10,
@@ -332,6 +461,7 @@ const styles = StyleSheet.create({
     elevation: 8,
     borderWidth: 1,
     borderColor: '#E5E7EB',
+    maxWidth: SCREEN_WIDTH - 20,
   },
   zoomButton: {
     flexDirection: 'row',
@@ -381,5 +511,40 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
     color: '#6B7280',
+  },
+  toggleSeparator: {
+    height: 1,
+    backgroundColor: '#E5E7EB',
+    marginVertical: 10,
+  },
+  toggleExpandButton: {
+    backgroundColor: '#F3F4F6',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+  },
+  toggleExpandButtonCollapsed: {
+    backgroundColor: '#667eea',
+    borderBottomLeftRadius: 12,
+    borderBottomRightRadius: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    shadowColor: '#667eea',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  toggleExpandText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  toggleExpandIcon: {
+    fontSize: 14,
+    color: '#fff',
+    fontWeight: '700',
   },
 });

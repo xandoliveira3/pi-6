@@ -4,6 +4,8 @@ import SideNav from '../components/SideNav';
 import UsuariosScreen from './admin/UsuariosScreen';
 import DashboardScreen from './admin/DashboardScreen';
 import ConfigScreen from './admin/ConfigScreen';
+import FormulariosScreen from './admin/FormulariosScreen';
+import FormularioBuilderScreen from './admin/FormularioBuilderScreen';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -14,6 +16,8 @@ interface AdminScreenProps {
 
 export default function AdminScreen({ onLogout, zoomLevel = 1 }: AdminScreenProps) {
   const [activeTab, setActiveTab] = useState('usuarios');
+  const [formularioSelecionado, setFormularioSelecionado] = useState<any | null>(null);
+  const [mostrarBuilder, setMostrarBuilder] = useState(false);
 
   function handleTabPress(tab: string) {
     if (tab === 'logout') {
@@ -23,7 +27,48 @@ export default function AdminScreen({ onLogout, zoomLevel = 1 }: AdminScreenProp
     setActiveTab(tab);
   }
 
+  function handleCriarFormulario() {
+    setFormularioSelecionado(null);
+    setMostrarBuilder(true);
+  }
+
+  function handleEditarFormulario(formulario: any) {
+    setFormularioSelecionado(formulario);
+    setMostrarBuilder(true);
+  }
+
+  function handleVoltarDoBuilder() {
+    setMostrarBuilder(false);
+    setFormularioSelecionado(null);
+  }
+
+  function handleSalvarFormulario() {
+    setMostrarBuilder(false);
+    setFormularioSelecionado(null);
+  }
+
   function renderScreen() {
+    if (mostrarBuilder) {
+      return (
+        <FormularioBuilderScreen
+          zoomLevel={zoomLevel}
+          formulario={formularioSelecionado}
+          onVoltar={handleVoltarDoBuilder}
+          onSalvar={handleSalvarFormulario}
+        />
+      );
+    }
+
+    if (activeTab === 'formularios') {
+      return (
+        <FormulariosScreen
+          zoomLevel={zoomLevel}
+          onCriarFormulario={handleCriarFormulario}
+          onEditarFormulario={handleEditarFormulario}
+        />
+      );
+    }
+
     switch (activeTab) {
       case 'usuarios':
         return <UsuariosScreen zoomLevel={zoomLevel} />;
