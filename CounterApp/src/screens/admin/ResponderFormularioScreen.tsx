@@ -12,6 +12,7 @@ import {
 import { auth } from '@config/firebase';
 import { salvarRespostas, verificarSeJaRespondeu } from '@services/respostasService';
 import type { Formulario, Pergunta } from '@services/formularioService';
+import StarRating from '@components/StarRating';
 
 interface ResponderFormularioScreenProps {
   zoomLevel?: number;
@@ -220,25 +221,11 @@ export default function ResponderFormularioScreen({
             )}
 
             {pergunta.tipo === 'alternativa' && pergunta.tipoAlternativa === 'estrelas' && (
-              <View style={styles.estrelasContainer}>
-                {[0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5].map((valor) => (
-                  <TouchableOpacity
-                    key={valor}
-                    style={styles.estrelaButton}
-                    onPress={() => handleResponder(pergunta.id, valor)}
-                  >
-                    <Text style={[
-                      styles.estrelaText,
-                      (respostas[pergunta.id] || 0) >= valor && styles.estrelaAtiva
-                    ]}>
-                      ★
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-                <Text style={styles.estrelasValor}>
-                  {respostas[pergunta.id] ? `${respostas[pergunta.id]} / 5` : 'Selecione'}
-                </Text>
-              </View>
+              <StarRating
+                rating={respostas[pergunta.id] || 0}
+                onRatingChange={(valor) => handleResponder(pergunta.id, valor)}
+                size={scale(35)}
+              />
             )}
 
             {pergunta.tipo === 'alternativa' && pergunta.tipoAlternativa === 'emoji' && (
@@ -430,28 +417,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     color: '#1F2937',
     minHeight: 100,
-  },
-  // Estrelas
-  estrelasContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    flexWrap: 'wrap',
-  },
-  estrelaButton: {
-    padding: 4,
-  },
-  estrelaText: {
-    fontSize: 32,
-    color: '#D1D5DB',
-  },
-  estrelaAtiva: {
-    color: '#FBBF24',
-  },
-  estrelasValor: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginLeft: 8,
   },
   // Emoji
   emojiContainer: {

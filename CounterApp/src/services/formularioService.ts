@@ -17,6 +17,7 @@ export interface Formulario {
   titulo: string;
   descricao: string;
   ativo: boolean;
+  finalizado: boolean; // Novo campo: indica se formulário foi finalizado
   perguntas: Pergunta[];
   criado_em: any;
   atualizado_em: any;
@@ -70,6 +71,7 @@ export async function criarFormulario(
       titulo: titulo.trim(),
       descricao: descricao.trim(),
       ativo: true,
+      finalizado: false,
       perguntas: perguntasFiltradas,
       criado_em: serverTimestamp(),
       atualizado_em: serverTimestamp()
@@ -197,6 +199,14 @@ export async function ativarFormulario(formularioId: string): Promise<{ success:
 
 export async function inativarFormulario(formularioId: string): Promise<{ success: boolean; error?: string }> {
   return atualizarFormulario(formularioId, { ativo: false });
+}
+
+export async function finalizarFormulario(formularioId: string): Promise<{ success: boolean; error?: string }> {
+  return atualizarFormulario(formularioId, { finalizado: true });
+}
+
+export async function reabrirFormulario(formularioId: string): Promise<{ success: boolean; error?: string }> {
+  return atualizarFormulario(formularioId, { finalizado: false });
 }
 
 export async function excluirFormulario(formularioId: string): Promise<{ success: boolean; error?: string }> {

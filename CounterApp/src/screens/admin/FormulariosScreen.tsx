@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import { listarFormularios, ativarFormulario, inativarFormulario, excluirFormulario } from '../../services/formularioService';
+import { listarFormularios, ativarFormulario, inativarFormulario, excluirFormulario, finalizarFormulario, reabrirFormulario } from '../../services/formularioService';
 import type { Formulario } from '../../services/formularioService';
 
 interface FormulariosScreenProps {
@@ -52,6 +52,52 @@ export default function FormulariosScreen({ zoomLevel = 1, onCriarFormulario, on
     } else {
       Alert.alert('Erro', result.error);
     }
+  }
+
+  async function handleFinalizar(formulario: Formulario) {
+    Alert.alert(
+      'Finalizar Formulário',
+      `Tem certeza que deseja finalizar "${formulario.titulo}"?\n\n⚠️ Após finalizar, os dados detalhados serão liberados no Dashboard e não será mais possível editar o formulário.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Finalizar',
+          style: 'default',
+          onPress: async () => {
+            const result = await finalizarFormulario(formulario.id);
+            if (result.success) {
+              carregarFormularios();
+              Alert.alert('Sucesso', 'Formulário finalizado!');
+            } else {
+              Alert.alert('Erro', result.error);
+            }
+          }
+        }
+      ]
+    );
+  }
+
+  async function handleReabrir(formulario: Formulario) {
+    Alert.alert(
+      'Reabrir Formulário',
+      `Deseja reabrir "${formulario.titulo}" para edição?`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Reabrir',
+          style: 'default',
+          onPress: async () => {
+            const result = await reabrirFormulario(formulario.id);
+            if (result.success) {
+              carregarFormularios();
+              Alert.alert('Sucesso', 'Formulário reaberto!');
+            } else {
+              Alert.alert('Erro', result.error);
+            }
+          }
+        }
+      ]
+    );
   }
 
   async function handleExcluir(formulario: Formulario) {
@@ -102,6 +148,99 @@ export default function FormulariosScreen({ zoomLevel = 1, onCriarFormulario, on
         </TouchableOpacity>
       </View>
 
+      {/* Menu flutuante renderizado fora do fluxo */}
+      {menuVisible && (
+        <>
+          {/* Overlay transparente para fechar ao clicar fora */}
+          <View 
+            style={styles.overlayBackground} 
+            onStartShouldSetResponder={() => { abrirMenu(null); return true; }}
+          />
+          {formularios.map((formulario, index) => {
+            if (menuVisible !== formulario.id) return null;
+            
+            // Calcula a posição baseada no índice + header (60px) + padding + margens
+            const topPosition = 75 + (index * 155);
+            
+            return (
+              <View
+                key={formulario.id}
+                style={[
+                  styles.menu,
+                  { top: topPosition }
+                ]}
+              >
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={() => {
+                    abrirMenu(null);
+                    onEditarFormulario?.(formulario);
+                  }}
+                >
+                  <Text style={[styles.menuItemText, { fontSize: scale(13) }]}>✏️ Editar</Text>
+                </TouchableOpacity>
+
+                {!formulario.finalizado && formulario.ativo && (
+                  <TouchableOpacity
+                    style={styles.menuItem}
+                    onPress={() => {
+                      abrirMenu(null);
+                      handleFinalizar(formulario);
+                    }}
+                  >
+                    <Text style={[styles.menuItemText, { fontSize: scale(13) }]}>✅ Finalizar</Text>
+                  </TouchableOpacity>
+                )}
+
+                {formulario.finalizado && (
+                  <TouchableOpacity
+                    style={styles.menuItem}
+                    onPress={() => {
+                      abrirMenu(null);
+                      handleReabrir(formulario);
+                    }}
+                  >
+                    <Text style={[styles.menuItemText, { fontSize: scale(13) }]}>🔓 Reabrir</Text>
+                  </TouchableOpacity>
+                )}
+
+                {formulario.ativo ? (
+                  <TouchableOpacity
+                    style={styles.menuItem}
+                    onPress={() => {
+                      abrirMenu(null);
+                      handleInativar(formulario);
+                    }}
+                  >
+                    <Text style={[styles.menuItemText, { fontSize: scale(13) }]}>🚫 Inativar</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity
+                    style={styles.menuItem}
+                    onPress={() => {
+                      abrirMenu(null);
+                      handleAtivar(formulario);
+                    }}
+                  >
+                    <Text style={[styles.menuItemText, { fontSize: scale(13) }]}>✅ Ativar</Text>
+                  </TouchableOpacity>
+                )}
+
+                <TouchableOpacity
+                  style={[styles.menuItem, styles.menuItemDelete]}
+                  onPress={() => {
+                    abrirMenu(null);
+                    handleExcluir(formulario);
+                  }}
+                >
+                  <Text style={[styles.menuItemText, { fontSize: scale(13) }]}>🗑️ Excluir</Text>
+                </TouchableOpacity>
+              </View>
+            );
+          })}
+        </>
+      )}
+
       {/* Lista de formulários */}
       {formularios.length === 0 ? (
         <View style={styles.emptyContainer}>
@@ -130,61 +269,13 @@ export default function FormulariosScreen({ zoomLevel = 1, onCriarFormulario, on
                     </View>
                   </View>
                 </View>
-                
-                <View style={styles.menuContainer}>
-                  <TouchableOpacity
-                    style={styles.menuButton}
-                    onPress={() => abrirMenu(formulario.id)}
-                  >
-                    <Text style={[styles.menuButtonIcon, { fontSize: scale(20) }]}>⚙️</Text>
-                  </TouchableOpacity>
 
-                  {menuVisible === formulario.id && (
-                    <View style={styles.menu}>
-                      <TouchableOpacity
-                        style={styles.menuItem}
-                        onPress={() => {
-                          abrirMenu(null);
-                          onEditarFormulario?.(formulario);
-                        }}
-                      >
-                        <Text style={[styles.menuItemText, { fontSize: scale(13) }]}>✏️ Editar</Text>
-                      </TouchableOpacity>
-                      
-                      {formulario.ativo ? (
-                        <TouchableOpacity
-                          style={styles.menuItem}
-                          onPress={() => {
-                            abrirMenu(null);
-                            handleInativar(formulario);
-                          }}
-                        >
-                          <Text style={[styles.menuItemText, { fontSize: scale(13) }]}>🚫 Inativar</Text>
-                        </TouchableOpacity>
-                      ) : (
-                        <TouchableOpacity
-                          style={styles.menuItem}
-                          onPress={() => {
-                            abrirMenu(null);
-                            handleAtivar(formulario);
-                          }}
-                        >
-                          <Text style={[styles.menuItemText, { fontSize: scale(13) }]}>✅ Ativar</Text>
-                        </TouchableOpacity>
-                      )}
-                      
-                      <TouchableOpacity
-                        style={[styles.menuItem, styles.menuItemDelete]}
-                        onPress={() => {
-                          abrirMenu(null);
-                          handleExcluir(formulario);
-                        }}
-                      >
-                        <Text style={[styles.menuItemText, { fontSize: scale(13) }]}>🗑️ Excluir</Text>
-                      </TouchableOpacity>
-                    </View>
-                  )}
-                </View>
+                <TouchableOpacity
+                  style={styles.menuButton}
+                  onPress={() => abrirMenu(formulario.id)}
+                >
+                  <Text style={[styles.menuButtonIcon, { fontSize: scale(20) }]}>⚙️</Text>
+                </TouchableOpacity>
               </View>
             </View>
           ))}
@@ -312,18 +403,23 @@ const styles = StyleSheet.create({
   statusText: {
     fontWeight: '600',
   },
-  menuContainer: {
-    position: 'relative',
-  },
   menuButton: {
     padding: 8,
   },
   menuButtonIcon: {
   },
+  overlayBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 998,
+    elevation: 998,
+  },
   menu: {
     position: 'absolute',
-    right: 0,
-    top: 40,
+    right: 16,
     backgroundColor: '#fff',
     borderRadius: 8,
     borderWidth: 1,
@@ -332,7 +428,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
-    elevation: 8,
+    elevation: 1000,
+    zIndex: 1001,
     minWidth: 140,
     overflow: 'hidden',
   },

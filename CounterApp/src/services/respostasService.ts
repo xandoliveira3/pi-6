@@ -124,47 +124,124 @@ export async function listarRespostasFormulario(formularioId: string): Promise<a
 export async function getEstatisticasFormulario(formularioId: string): Promise<{
   totalRespostas: number;
   perguntas: any[];
+  usuariosQueResponderam: string[]; // Hash dos usuários
 }> {
   try {
     const respostas = await listarRespostasFormulario(formularioId);
-    
+
     // Busca o formulário para pegar as perguntas
     const formRef = doc(db, 'formularios', formularioId);
     const formSnap = await getDocs(collection(db, 'formularios'));
-    
+
     let formulario: any = null;
     formSnap.forEach((doc) => {
       if (doc.id === formularioId) {
         formulario = { id: doc.id, ...doc.data() };
       }
     });
-    
+
     if (!formulario) {
-      return { totalRespostas: 0, perguntas: [] };
+      return { totalRespostas: 0, perguntas: [], usuariosQueResponderam: [] };
     }
-    
+
+    // Lista de usuários que responderam
+    const usuariosQueResponderam = respostas.map((r: any) => r.usuarioHash);
+
     // Processa estatísticas por pergunta
     const perguntasEstatisticas = formulario.perguntas?.map((pergunta: any) => {
       const respostasPergunta = respostas.map((r: any) => {
         const resp = r.respostas?.find((p: any) => p.perguntaId === pergunta.id);
         return resp?.valor;
       }).filter((v: any) => v !== undefined);
+
+      // Calcula estatísticas para múltipla escolha
+      const estatisticasAlternativa: any = {};
       
+      if (pergunta.tipo === 'alternativa' && pergunta.alternativas) {
+        // Conta respostas por alternativa
+        pergunta.alternativas.forEach((alt: string) => {
+          const count = respostasPergunta.filter((v: any) => v === alt).length;
+          estatisticasAlternativa[alt] = {
+            count,
+            percentage: respostasPergunta.length > 0 ? (count / respostasPergunta.length) * 100 : 0
+          };
+        });
+      }
+
+      // Calcula média para numéricas
+      const media = respostasPergunta.length > 0
+        ? respostasPergunta.reduce((a: number, b: number) => a + b, 0) / respostasPergunta.length
+        : 0;
+
       return {
         pergunta: pergunta.titulo,
         tipo: pergunta.tipo,
         tipoAlternativa: pergunta.tipoAlternativa,
+        alternativas: pergunta.alternativas,
         totalRespostas: respostasPergunta.length,
-        respostas: respostasPergunta
+        respostas: respostasPergunta,
+        media,
+        estatisticasAlternativa
       };
     }) || [];
-    
+
     return {
       totalRespostas: respostas.length,
-      perguntas: perguntasEstatisticas
+      perguntas: perguntasEstatisticas,
+      usuariosQueResponderam
     };
   } catch (error: any) {
     console.error('Erro ao get estatísticas:', error.message);
-    return { totalRespostas: 0, perguntas: [] };
+    return { totalRespostas: 0, perguntas: [], usuariosQueResponderam: [] };
+  }
+}
+
+export async function getListaUsuariosPorFormulario(formularioId: string): Promise<{
+  respondidos: { hash: string; nome: string; email: string }[];
+  faltantes: { hash: string; nome: string; email: string }[];
+  totalAtivos: number;
+}> {
+  try {
+    const { getEstatisticasUsuarios } = await import('./adminService');
+    const { listarUsuarios } = await import('./adminService');
+    
+    // Pega estatísticas do formulário
+    const stats = await getEstatisticasFormulario(formularioId);
+    const hashesRespondidos = stats.usuariosQueResponderam;
+    
+    // Pega todos os usuários ativos (EXCETO administradores)
+    const usuariosAtivos = await listarUsuarios();
+    const ativosNaoAdmin = usuariosAtivos.filter(u => u.ativo && u.tipo_usuario !== 'admin');
+    
+    const respondidos: { hash: string; nome: string; email: string }[] = [];
+    const faltantes: { hash: string; nome: string; email: string }[] = [];
+    
+    ativosNaoAdmin.forEach(usuario => {
+      const hashUsuario = gerarHashUsuario(usuario.id);
+      const dadosUsuario = {
+        hash: hashUsuario,
+        nome: usuario.nome,
+        email: usuario.email || ''
+      };
+      
+      if (hashesRespondidos.includes(hashUsuario)) {
+        respondidos.push(dadosUsuario);
+      } else {
+        faltantes.push(dadosUsuario);
+      }
+    });
+    
+    return {
+      respondidos,
+      faltantes,
+      totalAtivos: ativosNaoAdmin.length
+    };
+  } catch (error: any) {
+    console.error('Erro ao get lista de usuários por formulário:', error.message);
+    return {
+      respondidos: [],
+      faltantes: [],
+      totalAtivos: 0
+    };
   }
 }

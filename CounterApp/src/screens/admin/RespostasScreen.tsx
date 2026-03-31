@@ -11,6 +11,7 @@ import {
 import { listarFormularios } from '../../services/formularioService';
 import { getEstatisticasFormulario, listarRespostasFormulario } from '../../services/respostasService';
 import type { Formulario } from '../../services/formularioService';
+import BarChart from '@components/BarChart';
 
 interface RespostasScreenProps {
   zoomLevel?: number;
@@ -114,9 +115,10 @@ export default function RespostasScreen({ zoomLevel = 1 }: RespostasScreenProps)
         animationType="slide"
         transparent
         onRequestClose={() => setModalVisible(false)}
+        statusBarTranslucent
       >
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { width: scale(360), maxHeight: '80%' }]}>
+          <View style={[styles.modalContent, { width: scale(360), maxHeight: '80%', zIndex: 9999 }]}>
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { fontSize: scale(16) }]}>
                 {formularioSelecionado?.titulo}
@@ -144,30 +146,64 @@ export default function RespostasScreen({ zoomLevel = 1 }: RespostasScreenProps)
               </View>
 
               {/* Perguntas e Respostas */}
-              {estatisticas?.perguntas?.map((pergunta: any, index: number) => (
-                <View key={index} style={styles.perguntaCard}>
-                  <Text style={[styles.perguntaTitulo, { fontSize: scale(14) }]}>
-                    {index + 1}. {pergunta.pergunta}
-                  </Text>
-                  <Text style={[styles.perguntaTipo, { fontSize: scale(11) }]}>
-                    {pergunta.tipo === 'dissertativa' ? '📝 Dissertativa' : `⭐ ${pergunta.tipoAlternativa}`}
-                  </Text>
-                  <View style={styles.respostasResumo}>
-                    <Text style={[styles.resumoLabel, { fontSize: scale(11) }]}>
-                      {pergunta.totalRespostas} resposta(s)
+              {estatisticas?.perguntas?.map((pergunta: any, index: number) => {
+                // Prepara dados para o gráfico (apenas para múltipla escolha)
+                const chartData = pergunta.alternativas?.map((alt: string) => {
+                  const stats = pergunta.estatisticasAlternativa?.[alt] || { count: 0, percentage: 0 };
+                  return {
+                    label: alt.length > 15 ? alt.substring(0, 15) + '...' : alt,
+                    value: stats.count,
+                    percentage: stats.percentage
+                  };
+                }) || [];
+
+                const isMultiplaEscolha = pergunta.tipo === 'alternativa' && pergunta.alternativas;
+
+                return (
+                  <View key={index} style={styles.perguntaCard}>
+                    <Text style={[styles.perguntaTitulo, { fontSize: scale(14) }]}>
+                      {index + 1}. {pergunta.pergunta}
                     </Text>
-                    {pergunta.tipo === 'dissertativa' ? (
-                      <Text style={[styles.resumoDissertativa, { fontSize: scale(11) }]}>
-                        (Respostas textuais - ver detalhes)
+                    <Text style={[styles.perguntaTipo, { fontSize: scale(11) }]}>
+                      {pergunta.tipo === 'dissertativa' ? '📝 Dissertativa' : 
+                       isMultiplaEscolha ? '📊 Múltipla Escolha' : `⭐ ${pergunta.tipoAlternativa}`}
+                    </Text>
+                    <View style={styles.respostasResumo}>
+                      <Text style={[styles.resumoLabel, { fontSize: scale(11) }]}>
+                        {pergunta.totalRespostas} resposta(s)
                       </Text>
-                    ) : (
-                      <Text style={[styles.resumoAlternativa, { fontSize: scale(11) }]}>
-                        Média: {pergunta.respostas?.reduce((a: number, b: number) => a + b, 0) / (pergunta.respostas?.length || 1) || 0}
-                      </Text>
+                      {pergunta.tipo === 'dissertativa' ? (
+                        <Text style={[styles.resumoDissertativa, { fontSize: scale(11) }]}>
+                          (Respostas textuais - ver detalhes)
+                        </Text>
+                      ) : isMultiplaEscolha ? (
+                        <Text style={[styles.resumoAlternativa, { fontSize: scale(11) }]}>
+                          Mais votada: {chartData.sort((a, b) => b.value - a.value)[0]?.label || 'N/A'}
+                        </Text>
+                      ) : (
+                        <Text style={[styles.resumoAlternativa, { fontSize: scale(11) }]}>
+                          Média: {pergunta.media?.toFixed(1) || 0}
+                        </Text>
+                      )}
+                    </View>
+                    
+                    {/* Gráfico de barras para múltipla escolha */}
+                    {isMultiplaEscolha && pergunta.totalRespostas > 0 && (
+                      <View style={styles.chartContainer}>
+                        <Text style={[styles.chartTitle, { fontSize: scale(12) }]}>
+                          📊 Distribuição das Respostas
+                        </Text>
+                        <BarChart
+                          data={chartData}
+                          height={scale(180)}
+                          showValues={true}
+                          showPercentages={true}
+                        />
+                      </View>
                     )}
                   </View>
-                </View>
-              ))}
+                );
+              })}
 
               {/* Lista de Respostas (anônimas) */}
               {respostas.length > 0 && (
@@ -294,11 +330,15 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 9998,
+    elevation: 1000,
   },
   modalContent: {
     backgroundColor: '#fff',
     borderRadius: 16,
     overflow: 'hidden',
+    zIndex: 9999,
+    elevation: 1001,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -373,6 +413,18 @@ const styles = StyleSheet.create({
   resumoAlternativa: {
     color: '#667eea',
     fontWeight: '600',
+  },
+  chartContainer: {
+    marginTop: 12,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 12,
+  },
+  chartTitle: {
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 8,
+    textAlign: 'center',
   },
   respostasSection: {
     marginTop: 16,
