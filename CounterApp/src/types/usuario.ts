@@ -6,4 +6,6 @@ export interface Usuario {
   ativo: boolean;
   criado_em?: any;
   atualizado_em?: any;
+  faceEmbedding?: number[]; // Vetor de características faciais (128 dimensões)
+  faceEmbeddingVersion?: number; // Versão do embedding para controle de atualização
 }

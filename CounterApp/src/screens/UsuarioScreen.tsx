@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { auth } from '@config/firebase';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@config/firebase';
 import { listarFormularios } from '@services/formularioService';
 import { verificarSeJaRespondeu } from '@services/respostasService';
+import { verificarUsuarioTemFace } from '@services/faceUserService';
 import ResponderFormularioScreen from './admin/ResponderFormularioScreen';
+import FaceDataScreen from './FaceDataScreen';
 import type { Formulario } from '@services/formularioService';
 
 interface UsuarioScreenProps {
@@ -18,6 +22,9 @@ export default function UsuarioScreen({ onLogout, zoomLevel = 1 }: UsuarioScreen
   const [formularioResponder, setFormularioResponder] = useState<Formulario | null>(null);
   const [respostasStatus, setRespostasStatus] = useState<{ [key: string]: boolean }>({});
   const [mensagemSucesso, setMensagemSucesso] = useState<string | null>(null);
+  const [showFaceData, setShowFaceData] = useState(false);
+  const [temFace, setTemFace] = useState<boolean | null>(null);
+  const [nomeUsuario, setNomeUsuario] = useState<string>('');
 
   async function carregarFormularios() {
     setLoading(true);
@@ -25,7 +32,7 @@ export default function UsuarioScreen({ onLogout, zoomLevel = 1 }: UsuarioScreen
     const formulariosAtivos = lista.filter(f => f.ativo);
     setFormularios(formulariosAtivos);
 
-    // Verifica quais já foram respondidos
+    // Verifica quais já foram respondidos e pega nome do usuário
     const usuario = auth.currentUser;
     if (usuario) {
       const status: { [key: string]: boolean } = {};
@@ -33,6 +40,22 @@ export default function UsuarioScreen({ onLogout, zoomLevel = 1 }: UsuarioScreen
         status[form.id] = await verificarSeJaRespondeu(form.id, usuario.uid);
       }
       setRespostasStatus(status);
+
+      // Verifica se tem face cadastrada
+      const hasFace = await verificarUsuarioTemFace(usuario.uid);
+      setTemFace(hasFace);
+
+      // Busca nome do usuário no Firestore
+      try {
+        const usuarioDoc = await getDoc(doc(db, 'usuarios', usuario.uid));
+        if (usuarioDoc.exists()) {
+          const dadosUsuario = usuarioDoc.data();
+          setNomeUsuario(dadosUsuario.nome || 'Usuário');
+        }
+      } catch (error) {
+        console.error('[UsuarioScreen] Erro ao buscar nome:', error);
+        setNomeUsuario('Usuário');
+      }
     }
     setLoading(false);
   }
@@ -40,6 +63,16 @@ export default function UsuarioScreen({ onLogout, zoomLevel = 1 }: UsuarioScreen
   useEffect(() => {
     carregarFormularios();
   }, []);
+
+  function handleOpenFaceData() {
+    setShowFaceData(true);
+  }
+
+  function handleCloseFaceData() {
+    setShowFaceData(false);
+    // Recarrega para atualizar status da face
+    carregarFormularios();
+  }
 
   function handleResponderFormulario(formulario: Formulario) {
     setFormularioResponder(formulario);
@@ -69,6 +102,15 @@ export default function UsuarioScreen({ onLogout, zoomLevel = 1 }: UsuarioScreen
     );
   }
 
+  if (showFaceData) {
+    return (
+      <FaceDataScreen
+        zoomLevel={zoomLevel}
+        onBack={handleCloseFaceData}
+      />
+    );
+  }
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -81,7 +123,23 @@ export default function UsuarioScreen({ onLogout, zoomLevel = 1 }: UsuarioScreen
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Text style={[styles.title, { fontSize: scale(24) }]}>📋 Formulários</Text>
+        <View style={styles.headerTop}>
+          <View style={styles.headerLeft}>
+            <Text style={[styles.title, { fontSize: scale(24) }]}>📋 Formulários</Text>
+            {nomeUsuario && (
+              <Text style={[styles.userName, { fontSize: scale(13) }]}>Olá, {nomeUsuario}!</Text>
+            )}
+          </View>
+          <TouchableOpacity
+            style={[styles.faceDataButton, temFace === false && styles.faceDataButtonInactive]}
+            onPress={handleOpenFaceData}
+          >
+            <Text style={styles.faceDataButtonIcon}>{temFace ? '🧠✅' : '🧠❌'}</Text>
+            <Text style={[styles.faceDataButtonText, { fontSize: scale(11) }]}>
+              {temFace ? 'Face OK' : 'Cadastrar'}
+            </Text>
+          </TouchableOpacity>
+        </View>
         <Text style={[styles.subtitle, { fontSize: scale(14) }]}>
           Responda os formulários abaixo. Cada um pode ser respondido apenas uma vez.
         </Text>
@@ -202,9 +260,44 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
   },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerLeft: {
+    flex: 1,
+  },
   title: {
     fontWeight: 'bold',
     color: '#1F2937',
+  },
+  userName: {
+    color: '#059669',
+    fontWeight: '500',
+    marginTop: 2,
+  },
+  faceDataButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ECFDF5',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    gap: 6,
+  },
+  faceDataButtonInactive: {
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FECACA',
+  },
+  faceDataButtonIcon: {
+    fontSize: 16,
+  },
+  faceDataButtonText: {
+    fontWeight: '600',
+    color: '#059669',
   },
   subtitle: {
     color: '#6B7280',

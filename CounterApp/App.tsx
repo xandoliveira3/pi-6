@@ -5,6 +5,8 @@ import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth } from './src/config/firebase';
 import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
+import FaceLoginScreen from './src/screens/FaceLoginScreen';
+import FaceRegisterScreen from './src/screens/FaceRegisterScreen';
 import AdminScreen from './src/screens/AdminScreen';
 import UsuarioScreen from './src/screens/UsuarioScreen';
 import { logout } from './src/services/authService';
@@ -12,7 +14,7 @@ import { logout } from './src/services/authService';
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const isWeb = Platform.OS === 'web';
 
-type TelaAtual = 'login' | 'registro' | 'admin' | 'usuario';
+type TelaAtual = 'login' | 'registro' | 'faceLogin' | 'faceRegister' | 'admin' | 'usuario';
 
 export default function App() {
   const [usuarioLogado, setUsuarioLogado] = useState<User | null>(null);
@@ -135,6 +137,23 @@ export default function App() {
     setTelaAtual(tipo === 'admin' ? 'admin' : 'usuario');
   }
 
+  function handleGoToFaceLogin() {
+    setTelaAtual('faceLogin');
+  }
+
+  function handleGoToFaceRegister() {
+    setTelaAtual('faceRegister');
+  }
+
+  function handleFaceLoginSuccess(tipo: 'admin' | 'usuario') {
+    setTipoUsuario(tipo);
+    setTelaAtual(tipo === 'admin' ? 'admin' : 'usuario');
+  }
+
+  function handleFaceRegisterSuccess() {
+    setTelaAtual('login');
+  }
+
   function handleLogout() {
     setTipoUsuario(null);
     setTelaAtual('login');
@@ -145,11 +164,11 @@ export default function App() {
   }
 
   function handleGoToRegister() {
-    setTelaAtual('registro');
+    setTelaAtual('faceLogin');
   }
 
   function handleBackToLogin() {
-    setTelaAtual('login');
+    setTelaAtual('faceLogin');
   }
 
   function handleRegisterSuccess() {
@@ -209,7 +228,8 @@ export default function App() {
       return (
         <LoginScreen
           onLoginSuccess={handleLoginSuccess}
-          onGoToRegister={handleGoToRegister}
+          onGoToRegister={handleGoToFaceLogin}
+          onGoToFaceLogin={handleGoToFaceLogin}
           zoomLevel={zoomLevel}
         />
       );
@@ -219,6 +239,27 @@ export default function App() {
       return (
         <RegisterScreen
           onRegisterSuccess={handleRegisterSuccess}
+          onBackToLogin={handleBackToLogin}
+          zoomLevel={zoomLevel}
+        />
+      );
+    }
+
+    if (telaAtual === 'faceLogin') {
+      return (
+        <FaceLoginScreen
+          onLoginSuccess={handleFaceLoginSuccess}
+          onGoToEmailLogin={() => setTelaAtual('login')}
+          onGoToFaceRegister={handleGoToFaceRegister}
+          zoomLevel={zoomLevel}
+        />
+      );
+    }
+
+    if (telaAtual === 'faceRegister') {
+      return (
+        <FaceRegisterScreen
+          onRegisterSuccess={handleFaceRegisterSuccess}
           onBackToLogin={handleBackToLogin}
           zoomLevel={zoomLevel}
         />

@@ -56,12 +56,19 @@ export default function ResponderFormularioScreen({
     console.log('[ResponderFormulario] handleEnviar chamado');
     console.log('[ResponderFormulario] Usuário:', usuario?.uid);
     console.log('[ResponderFormulario] Formulário ID:', formulario.id);
-    console.log('[ResponderFormulario] Total perguntas:', formulario.perguntas.length);
-    console.log('[ResponderFormulario] Respostas:', respostas);
+    console.log('[ResponderFormulario] Total perguntas:', formulario.perguntas?.length || 0);
+    console.log('[ResponderFormulario] Respostas:', JSON.stringify(respostas, null, 2));
 
     // Verifica se há usuário logado
     if (!usuario) {
+      console.error('[ResponderFormulario] Usuário não logado!');
       Alert.alert('Erro', 'Usuário não logado. Faça login novamente.');
+      return;
+    }
+
+    // Verifica se há perguntas
+    if (!formulario.perguntas || formulario.perguntas.length === 0) {
+      Alert.alert('Erro', 'Este formulário não possui perguntas.');
       return;
     }
 
@@ -73,47 +80,73 @@ export default function ResponderFormularioScreen({
     });
 
     console.log('[ResponderFormulario] Perguntas obrigatórias:', perguntasObrigatorias.length);
-    console.log('[ResponderFormulario] Faltando:', faltando);
+    console.log('[ResponderFormulario] Faltando responder:', faltando);
 
     if (faltando) {
       Alert.alert('Atenção', 'Responda todas as perguntas obrigatórias antes de enviar.');
       return;
     }
 
-    setLoading(true);
+    // Confirmação antes de enviar
+    Alert.alert(
+      'Confirmar Envio',
+      `Deseja enviar suas respostas para "${formulario.titulo}"?`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Enviar',
+          onPress: async () => {
+            setLoading(true);
 
-    try {
-      // Filtra apenas respostas válidas (não undefined)
-      const respostasFormatadas = formulario.perguntas
-        .filter((pergunta) => respostas[pergunta.id] !== undefined && respostas[pergunta.id] !== null && respostas[pergunta.id] !== '')
-        .map((pergunta) => ({
-          perguntaId: pergunta.id,
-          valor: respostas[pergunta.id]
-        }));
+            try {
+              // Filtra apenas respostas válidas (não undefined)
+              const respostasFormatadas = formulario.perguntas
+                .filter((pergunta) => {
+                  const resp = respostas[pergunta.id];
+                  return resp !== undefined && resp !== null && resp !== '';
+                })
+                .map((pergunta) => ({
+                  perguntaId: pergunta.id,
+                  valor: respostas[pergunta.id]
+                }));
 
-      console.log('[ResponderFormulario] Respostas formatadas:', respostasFormatadas);
-      console.log('[ResponderFormulario] Enviando para salvarRespostas...');
+              console.log('[ResponderFormulario] Respostas formatadas:', respostasFormatadas.length);
 
-      const result = await salvarRespostas(
-        formulario.id,
-        usuario.uid,
-        respostasFormatadas
-      );
+              if (respostasFormatadas.length === 0) {
+                Alert.alert('Erro', 'Nenhuma resposta válida para enviar.');
+                setLoading(false);
+                return;
+              }
 
-      console.log('[ResponderFormulario] Resultado:', result);
+              console.log('[ResponderFormulario] Enviando para salvarRespostas...');
 
-      if (result.success) {
-        // Sucesso - chama onResponder para voltar e recarregar
-        onResponder();
-      } else {
-        Alert.alert('Erro', result.error || 'Erro ao salvar respostas.');
-      }
-    } catch (error: any) {
-      console.error('[ResponderFormulario] Erro:', error.message);
-      Alert.alert('Erro', 'Não foi possível enviar suas respostas. Tente novamente.');
-    } finally {
-      setLoading(false);
-    }
+              const result = await salvarRespostas(
+                formulario.id,
+                usuario.uid,
+                respostasFormatadas
+              );
+
+              console.log('[ResponderFormulario] Resultado:', result);
+
+              if (result.success) {
+                Alert.alert('Sucesso', 'Formulário enviado com sucesso! ✅');
+                // Pequeno delay para o usuário ver a mensagem
+                setTimeout(() => {
+                  onResponder();
+                }, 500);
+              } else {
+                Alert.alert('Erro', result.error || 'Erro ao salvar respostas.');
+              }
+            } catch (error: any) {
+              console.error('[ResponderFormulario] Erro:', error);
+              Alert.alert('Erro', 'Não foi possível enviar suas respostas. Tente novamente.');
+            } finally {
+              setLoading(false);
+            }
+          },
+        },
+      ]
+    );
   }
 
   function handleProxima() {

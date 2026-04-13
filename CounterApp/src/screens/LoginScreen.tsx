@@ -15,10 +15,11 @@ import { login } from '../services/authService';
 interface LoginScreenProps {
   onLoginSuccess: (tipoUsuario: 'admin' | 'usuario') => void;
   onGoToRegister: () => void;
+  onGoToFaceLogin?: () => void;
   zoomLevel?: number;
 }
 
-export default function LoginScreen({ onLoginSuccess, onGoToRegister, zoomLevel = 1 }: LoginScreenProps) {
+export default function LoginScreen({ onLoginSuccess, onGoToRegister, onGoToFaceLogin, zoomLevel = 1 }: LoginScreenProps) {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [loading, setLoading] = useState(false);
@@ -173,6 +174,17 @@ export default function LoginScreen({ onLoginSuccess, onGoToRegister, zoomLevel 
                   <Text style={[styles.buttonText, { fontSize: scale(16) }]}>Entrar</Text>
                 )}
               </TouchableOpacity>
+
+              {/* Botão Login Facial */}
+              {onGoToFaceLogin && (
+                <TouchableOpacity
+                  style={styles.faceLoginButton}
+                  onPress={onGoToFaceLogin}
+                  disabled={loading}
+                >
+                  <Text style={styles.faceLoginButtonText}>🧠 Login com Reconhecimento Facial</Text>
+                </TouchableOpacity>
+              )}
 
               {/* Botão Criar Conta */}
               <TouchableOpacity
@@ -339,6 +351,23 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontWeight: '700',
+  },
+  faceLoginButton: {
+    backgroundColor: '#10B981',
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: 8,
+    shadowColor: '#10B981',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  faceLoginButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 14,
   },
   registerButton: {
     paddingVertical: 12,
